@@ -6,6 +6,50 @@
 <title>Skincare Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDpatmTGl7sN3sbBRhNqYWYALz1MuI6jjU",
+  authDomain: "skincare-app-75475.firebaseapp.com",
+  projectId: "skincare-app-75475",
+  storageBucket: "skincare-app-75475.firebasestorage.app",
+  messagingSenderId: "384563879946",
+  appId: "1:384563879946:web:632d989b75060ed30e3ff3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const DOC_REF = doc(db, 'users', 'ksenia');
+
+// Expose to global scope for main script
+window._db = db;
+window._docRef = DOC_REF;
+window._getDoc = getDoc;
+window._setDoc = setDoc;
+window._firebaseReady = true;
+
+// Load state from Firestore on init
+async function initFromFirestore() {
+  try {
+    const snap = await getDoc(DOC_REF);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.state) {
+        window._remoteState = JSON.parse(data.state);
+      }
+    }
+  } catch(e) {
+    console.warn('Firestore load failed, using localStorage', e);
+  }
+  // Signal main script to initialize
+  window.dispatchEvent(new Event('firebase-ready'));
+}
+
+initFromFirestore();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -532,18 +576,37 @@ const VACATION_ROUTINE = [
 let state = loadState();
 
 function loadState() {
+  // If Firestore loaded a remote state, use it
+  if (window._remoteState) {
+    const s = window._remoteState;
+    if (s.season === 'base') s.season = null;
+    return s;
+  }
+  // Fallback to localStorage
   try {
     const s = JSON.parse(localStorage.getItem('sc_state_v3') || 'null');
     if (s) { if (s.season === 'base') s.season = null; return s; }
     const v2 = JSON.parse(localStorage.getItem('sc_state_v2') || 'null');
     if (v2) return { ...v2, opened: [], season: null };
   } catch(e) {}
-  const defaultActive = [1,2,4,8,10,11,12,13,15,16,17,19,21,33];
-  return { active: defaultActive, finished: [], custom: [], suggestions: [], opened: [], season: null };
+  return { active: [1,2,4,8,10,11,12,13,15,16,17,19,21,33], finished: [], custom: [], suggestions: [], opened: [], season: null };
 }
 
+let _saveTimer = null;
 function saveState() {
+  // Always save to localStorage as backup
   try { localStorage.setItem('sc_state_v3', JSON.stringify(state)); } catch(e) {}
+  // Debounce Firestore writes (max 1 per 2 seconds)
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(async () => {
+    if (window._firebaseReady && window._docRef && window._setDoc) {
+      try {
+        await window._setDoc(window._docRef, { state: JSON.stringify(state) });
+      } catch(e) {
+        console.warn('Firestore save failed', e);
+      }
+    }
+  }, 2000);
 }
 
 function allProducts() { return [...PRODUCTS, ...state.custom]; }
@@ -1513,8 +1576,23 @@ function showToast(msg) {
 }
 
 // ─── INIT ────────────────────────────────────────────────
-syncSeasonSelect();
-render();
+function init() {
+  // Reload state (Firestore may have loaded by now)
+  state = loadState();
+  syncSeasonSelect();
+  render();
+}
+
+// Wait for Firebase to load, fallback after 3s
+if (window._remoteState) {
+  init();
+} else {
+  window.addEventListener('firebase-ready', () => { state = loadState(); syncSeasonSelect(); render(); });
+  setTimeout(() => { if (!document.getElementById('products-list').firstChild) init(); }, 3000);
+  // Show loading indicator immediately
+  syncSeasonSelect();
+  render();
+}
 </script>
 </body>
 </html>
