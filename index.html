@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skincare Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070D12;
+  --surface:#0E1820;
+  --surface2:#152030;
+  --surface3:#1C2A3A;
+  --text:#EEF4F8;
+  --text-muted:#7A9AB0;
+  --text-hint:#3A5468;
+  --accent:#34C9E7;
+  --accent-light:rgba(52,201,231,0.10);
+  --accent-mid:rgba(52,201,231,0.22);
+  --accent-glow:rgba(52,201,231,0.30);
+  --accent-dark:#1FA8C4;
+  --active-card:rgba(23,81,113,0.45);
+  --active-card-border:rgba(52,201,231,0.30);
+  --danger:#EF4444;
+  --danger-light:rgba(239,68,68,0.12);
+  --success:#22C55E;
+  --success-light:rgba(34,197,94,0.1);
+  --warn:#F59E0B;
+  --warn-light:rgba(245,158,11,0.1);
+  --border:rgba(255,255,255,0.06);
+  --border-strong:rgba(255,255,255,0.11);
+  --radius:14px;--radius-sm:10px;--radius-pill:100px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+.shell{max-width:420px;margin:0 auto;min-height:100vh;background:var(--bg)}
+
+header{
+  padding:1.25rem 1.25rem 0;
+  position:sticky;top:0;
+  background:linear-gradient(to bottom, rgba(7,13,18,0.97) 0%, rgba(14,32,48,0.97) 100%);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  z-index:10;
+  border-bottom:1px solid var(--border);
+}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.app-title{font-size:18px;font-weight:600;letter-spacing:-0.02em;color:var(--text)}
+.app-title em{font-style:normal;color:var(--accent)}
+
+.tabs{display:flex;margin-top:0.75rem;gap:0}
+.tab-btn{
+  flex:1;padding:9px 0;
+  background:none;border:none;
+  border-bottom:2px solid transparent;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
+  color:var(--text-hint);cursor:pointer;transition:all 0.2s;letter-spacing:0.01em;
+}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.content{padding:1.25rem}
+.tab-panel{display:none}.tab-panel.active{display:block}
+
+/* search */
+.search-wrap{position:relative;margin-bottom:1rem}
+.search-input{
+  width:100%;padding:10px 36px;
+  border:1px solid var(--border);border-radius:var(--radius-pill);
+  background:var(--surface2);
+  font-family:'Inter',sans-serif;font-size:13px;color:var(--text);
+  outline:none;transition:border-color 0.15s,box-shadow 0.15s;
+}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.search-input::placeholder{color:var(--text-hint)}
+.s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--text-hint);fill:none;stroke-width:2;stroke-linecap:round;pointer-events:none}
+.s-clear{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;display:none;align-items:center;justify-content:center}
+.s-clear svg{width:13px;height:13px;stroke:var(--text-hint);fill:none;stroke-width:2;stroke-linecap:round}
+
+/* section label */
+.section-label{
+  font-size:10px;font-weight:600;letter-spacing:0.1em;
+  text-transform:uppercase;color:var(--text-hint);
+  margin:1.5rem 0 0.5rem;
+}
+.section-label:first-child{margin-top:0}
+
+/* product card */
+.product-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:12px 14px;margin-bottom:6px;
+  display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+  transition:border-color 0.15s,box-shadow 0.15s,transform 0.1s,opacity 0.2s;
+}
+.product-card:active{transform:scale(0.99)}
+.product-card:hover{border-color:var(--border-strong)}
+.product-card.is-active{
+  border-color:var(--active-card-border);
+  background:var(--active-card);
+  box-shadow:0 0 0 1px var(--active-card-border), 0 0 10px rgba(52,201,231,0.08);
+}
+.product-card.is-finished{opacity:0.3}
+.product-info{flex:1;min-width:0}
+.product-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.4}
+.product-desc{font-size:12px;color:var(--text-muted);line-height:1.4;margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:var(--radius-pill);letter-spacing:0.03em}
+.tag-active{background:rgba(52,201,231,0.15);color:var(--accent);border:1px solid rgba(52,201,231,0.3)}
+.tag-mini{background:var(--surface3);color:var(--text-hint)}
+.tag-finished{background:var(--danger-light);color:var(--danger)}
+.tag-skip{background:var(--surface2);color:var(--text-hint)}
+.card-actions{display:flex;flex-direction:column;gap:6px;align-items:center}
+.finish-btn{
+  width:26px;height:26px;min-width:26px;border-radius:50%;
+  border:1.5px solid var(--border-strong);background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.15s;
+}
+.finish-btn:hover{border-color:var(--success);background:var(--success-light)}
+.finish-btn:hover svg{stroke:var(--success)}
+.finish-btn.is-done{background:var(--danger-light);border-color:var(--danger)}
+.finish-btn svg{width:12px;height:12px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.finish-btn.is-done svg{stroke:var(--danger)}
+
+/* routine */
+.day-block{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:8px;overflow:hidden;
+}
+.day-header{
+  padding:13px 14px;display:flex;justify-content:space-between;
+  align-items:center;cursor:pointer;transition:background 0.15s;
+}
+.day-header:hover{background:var(--surface2)}
+.day-title{font-size:13px;font-weight:600;color:var(--text)}
+.day-right{display:flex;align-items:center;gap:6px}
+.time-badge{font-size:10px;font-weight:600;padding:3px 8px;border-radius:var(--radius-pill);letter-spacing:0.04em}
+.badge-morning{background:rgba(245,158,11,0.12);color:#F59E0B;border:1px solid rgba(245,158,11,0.2)}
+.badge-evening{background:var(--surface3);color:var(--text-muted);border:1px solid var(--border)}
+.chevron{width:14px;height:14px;stroke:var(--text-hint);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform 0.2s}
+.day-block.open .chevron{transform:rotate(180deg)}
+.day-steps{border-top:1px solid var(--border);padding:8px 14px;display:none}
+.day-block.open .day-steps{display:block}
+.step-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.step-row:last-child{border-bottom:none}
+.step-num{
+  font-size:10px;font-weight:700;color:var(--accent);
+  min-width:16px;margin-top:3px;
+}
+.step-product{font-size:13px;font-weight:500;color:var(--text)}
+.step-why{font-size:11px;color:var(--text-muted);margin-top:1px;line-height:1.4}
+
+/* note */
+.note-box{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-left:3px solid var(--accent);
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  padding:10px 12px;font-size:12px;color:var(--text-muted);
+  line-height:1.5;margin-bottom:1rem;
+}
+
+/* toast */
+.toast{
+  position:fixed;bottom:1.5rem;left:1rem;right:1rem;
+  transform:translateY(20px);
+  background:var(--surface3);color:var(--text);
+  border:1px solid var(--border-strong);
+  font-size:13px;padding:11px 16px;border-radius:var(--radius);
+  opacity:0;transition:all 0.25s;pointer-events:none;z-index:100;
+  white-space:normal;max-width:420px;margin:0 auto;
+  text-align:center;line-height:1.4;
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border:1px solid var(--border-strong);
+  border-radius:var(--radius) var(--radius) 0 0;
+  padding:1.25rem;width:100%;max-width:420px;max-height:80vh;overflow-y:auto;
+}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1rem;color:var(--text)}
+.modal-label{font-size:12px;color:var(--text-muted);margin-bottom:4px;display:block}
+.modal-input{
+  width:100%;padding:9px 12px;border:1px solid var(--border-strong);
+  border-radius:var(--radius-sm);background:var(--surface2);
+  font-family:'Inter',sans-serif;font-size:13px;color:var(--text);
+  outline:none;margin-bottom:12px;transition:border-color 0.15s,box-shadow 0.15s;
+}
+.modal-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.modal-input::placeholder{color:var(--text-hint)}
+.modal-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:4px}
+.modal-btn{
+  padding:11px;border-radius:var(--radius-sm);
+  font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
+  border:1px solid var(--border-strong);background:var(--surface2);color:var(--text);
+  transition:all 0.15s;
+}
+.modal-btn.primary{
+  background:var(--accent);color:#fff;border-color:var(--accent);
+  box-shadow:0 0 20px var(--accent-glow);
+}
+.modal-btn:hover{background:var(--surface3)}
+.modal-btn.primary:hover{background:var(--accent-dark)}
+
+/* add button */
+.add-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:11px;
+  border:1px dashed var(--border-strong);border-radius:var(--radius);
+  background:none;font-family:'Inter',sans-serif;font-size:13px;
+  color:var(--text-muted);cursor:pointer;margin-top:8px;transition:all 0.15s;
+}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.add-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+/* suggestion banner */
+.suggestion{
+  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);
+  border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;
+  color:var(--accent);line-height:1.5;margin-bottom:8px;
+  display:flex;gap:8px;align-items:flex-start;
+}
+.suggestion svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;margin-top:2px}
+
+/* tips */
+.tip-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:13px 14px;margin-bottom:8px;
+}
+.tip-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.tip-icon{width:30px;height:30px;min-width:30px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.tip-icon svg{width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tip-icon.warn{background:var(--warn-light);box-shadow:0 0 12px rgba(245,158,11,0.15)}
+.tip-icon.warn svg{stroke:var(--warn)}
+.tip-icon.ok{background:var(--success-light)}
+.tip-icon.ok svg{stroke:var(--success)}
+.tip-icon.info{background:var(--accent-light)}
+.tip-icon.info svg{stroke:var(--accent)}
+.tip-day{font-size:10px;font-weight:600;color:var(--text-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:2px}
+.tip-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.4}
+.tip-body{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:8px}
+.tip-suggestions{display:flex;flex-direction:column;gap:4px}
+.tip-product-btn{
+  background:var(--accent-light);border:1px solid rgba(59,130,246,0.2);
+  border-radius:var(--radius-sm);padding:8px 10px;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:500;
+  color:var(--accent);cursor:pointer;text-align:left;
+  transition:all 0.15s;display:flex;align-items:center;gap:6px;
+}
+.tip-product-btn:hover{background:var(--accent-mid);box-shadow:0 0 12px var(--accent-glow)}
+.tip-product-btn svg{width:12px;height:12px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.tips-all-good{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);font-size:13px}
+.tips-all-good svg{width:36px;height:36px;stroke:var(--success);fill:none;stroke-width:1.5;stroke-linecap:round;display:block;margin:0 auto 10px;filter:drop-shadow(0 0 8px rgba(34,197,94,0.4))}
+
+.no-results{text-align:center;color:var(--text-hint);font-size:13px;padding:2rem 0}
+
+/* opened tag */
+.tag-opened{background:rgba(245,158,11,0.12);color:var(--warn);border:1px solid rgba(245,158,11,0.25)}
+
+/* season toggle */
+.season-toggle{display:flex;gap:6px;padding:6px 0 10px;overflow-x:auto;scrollbar-width:none}
+.season-toggle::-webkit-scrollbar{display:none}
+.season-btn{flex:none;padding:5px 12px;border:1px solid var(--border);border-radius:var(--radius-pill);background:var(--surface2);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.season-btn.active{background:var(--accent-light);color:var(--accent);border-color:rgba(52,201,231,0.4);box-shadow:0 0 8px var(--accent-glow)}
+
+/* compatibility */
+
+.compat-select:focus{border-color:var(--accent)}
+
+/* opened tip banner */
+.opened-tip{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.18);border-radius:var(--radius-sm);padding:10px 12px;font-size:12px;color:var(--warn);line-height:1.5;margin-bottom:8px;display:flex;gap:8px;align-items:flex-start}
+.opened-tip svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;margin-top:1px}
+
+/* custom season dropdown */
+.s-dropdown{position:relative;display:inline-block}
+.s-dropdown-btn{display:flex;align-items:center;gap:6px;padding:5px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;outline:none;transition:all 0.2s;white-space:nowrap}
+.s-dropdown-btn svg{width:11px;height:11px;stroke:var(--text-hint);fill:none;stroke-width:2;stroke-linecap:round;transition:transform 0.2s}
+.s-dropdown-btn.open svg{transform:rotate(180deg)}
+.s-dropdown-btn.has-value{background:var(--accent-light);color:var(--accent);border-color:rgba(52,201,231,0.4);box-shadow:0 0 8px var(--accent-glow)}
+.s-dropdown-btn.has-value svg{stroke:var(--accent)}
+.s-dropdown-menu{position:absolute;top:calc(100% + 6px);left:0;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius-sm);padding:4px;z-index:100;min-width:140px;box-shadow:0 8px 24px rgba(0,0,0,0.5);display:none}
+.s-dropdown-menu.open{display:block}
+.s-dropdown-option{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all 0.15s;border:none;background:none;width:100%;text-align:left}
+.s-dropdown-option:hover{background:var(--surface2);color:var(--text)}
+.s-dropdown-option.selected{background:var(--accent-light);color:var(--accent)}
+.s-dropdown-option .opt-icon{font-size:14px;width:20px;text-align:center}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="header-top">
+      <h1 class="app-title">skin<em>care</em></h1>
+      <div class="s-dropdown" id="season-dropdown">
+        <button class="s-dropdown-btn" id="season-btn" onclick="toggleSeasonMenu()">
+          <span id="season-label">🌿 Сезон</span>
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="s-dropdown-menu" id="season-menu">
+          <button class="s-dropdown-option selected" data-value="" onclick="pickSeason(this,'')"><span class="opt-icon">🌿</span>Без сезона</button>
+          <button class="s-dropdown-option" data-value="summer" onclick="pickSeason(this,'summer')"><span class="opt-icon">🌞</span>Лето</button>
+          <button class="s-dropdown-option" data-value="winter" onclick="pickSeason(this,'winter')"><span class="opt-icon">❄️</span>Зима</button>
+          <button class="s-dropdown-option" data-value="vacation" onclick="pickSeason(this,'vacation')"><span class="opt-icon">✈️</span>Отпуск</button>
+        </div>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" onclick="showTab('products')">Средства</button>
+      <button class="tab-btn" onclick="showTab('routine')">Рутина</button>
+      <button class="tab-btn" onclick="showTab('tips')">Советы</button>
+    </nav>
+  </header>
+
+  <main class="content">
+    <div id="tab-products" class="tab-panel active">
+      <div class="note-box">Нажми на карточку — добавить в рутину. Кружок справа — отметить закончившимся. Долгое нажатие на карточку — отметить как открытое.</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+        <button class="season-btn active" id="filter-all" onclick="setFilter('all')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface3);border:1px solid var(--border-strong);font-size:11px;font-weight:600;color:var(--text);cursor:pointer">Все <span id="total-count" style="opacity:0.6">0</span></button>
+        <button class="season-btn" id="filter-active" onclick="setFilter('active')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer">В рутине <span id="active-count" style="opacity:0.6">0</span></button>
+        <button class="season-btn" id="filter-opened" onclick="setFilter('opened')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer">🔓 Открыто</button>
+        <button class="season-btn" id="filter-finished" onclick="setFilter('finished')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer">Закончилось <span id="finished-count" style="opacity:0.6">0</span></button>
+      </div>
+      <div class="search-wrap">
+        <svg class="s-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" id="search-input" type="text" placeholder="Поиск..." oninput="onSearch(this.value)" autocomplete="off"/>
+        <button class="s-clear" id="search-clear" onclick="clearSearch()" aria-label="Очистить">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div id="suggestions-area"></div>
+      <div id="products-list"></div>
+      <button class="add-btn" onclick="openAddModal()">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить средство вручную
+      </button>
+    </div>
+
+    <div id="tab-routine" class="tab-panel">
+      <div class="note-box" id="routine-note">Рутина собирается автоматически на основе активных средств и выбранного сезона.</div>
+      <div id="routine-list"></div>
+    </div>
+
+    <div id="tab-tips" class="tab-panel">
+      <div class="note-box">Советы учитывают сезон и локацию. Открытые средства — в приоритете.</div>
+      <div id="tips-list"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Add modal -->
+<div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
+  <div class="modal">
+    <div class="modal-title">Добавить средство</div>
+
+    <!-- Step 1: input -->
+    <div id="add-step1">
+      <label class="modal-label">Напиши название — ИИ заполнит остальное</label>
+      <div style="display:flex;gap:8px;margin-bottom:4px">
+        <input class="modal-input" id="add-name" type="text" placeholder="Например: Laneige Water Sleeping Mask" style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter')analyzeProduct()"/>
+        <button class="modal-btn primary" id="analyze-btn" onclick="analyzeProduct()" style="padding:9px 14px;white-space:nowrap;margin-bottom:0">Анализ</button>
+      </div>
+      <div id="add-error" style="font-size:12px;color:var(--danger);margin-top:4px;display:none"></div>
+      <div id="add-loading" style="font-size:12px;color:var(--text-muted);margin-top:8px;display:none">ИИ анализирует средство...</div>
+    </div>
+
+    <!-- Step 2: AI result preview -->
+    <div id="add-step2" style="display:none">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:500;margin-bottom:4px" id="preview-name"></div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px" id="preview-desc"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag tag-mini" id="preview-cat"></span>
+          <span class="tag tag-active" id="preview-role-tag" style="display:none"></span>
+        </div>
+      </div>
+      <div id="preview-tip" style="font-size:12px;color:var(--info);background:var(--info-light);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:12px;display:none"></div>
+      <label class="modal-label">Добавить в рутину?</label>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="radio" name="add-active" value="1" checked> Да
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="radio" name="add-active" value="0"> Нет
+        </label>
+      </div>
+      <div class="modal-row">
+        <button class="modal-btn" onclick="resetAddModal()">Назад</button>
+        <button class="modal-btn primary" onclick="saveNewProduct()">Сохранить</button>
+      </div>
+    </div>
+
+    <div id="add-step-cancel" style="margin-top:8px;text-align:center">
+      <button style="background:none;border:none;font-size:12px;color:var(--text-hint);cursor:pointer" onclick="closeAddModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────
+// role: what slot in routine this fills
+// replacedBy: id(s) that can substitute when finished
+// skipReason: if set, tapping shows tip instead of adding to routine
+const PRODUCTS = [
+  {id:1, name:"Bioderma гель", desc:"Мягкое очищение, не нарушает барьер", cat:"Очищение", role:"cleanser", replacedBy:[3,6,35,36]},
+  {id:2, name:"Celimax Dual Barrier Creamy Toner", desc:"Восстановление барьера, prep перед активами", cat:"Тонер", role:"toner", replacedBy:[9]},
+  {id:3, name:"Celimax Cleansing Balm", desc:"Первый шаг двойного очищения или замена умывашки", cat:"Очищение", role:"cleanser", replacedBy:[6,35,36]},
+  {id:4, name:"COSRX Snail 96 Mucin Essence", desc:"Увлажнение, заживление, glow", cat:"Эссенция", role:"essence", replacedBy:[], mini:true},
+  {id:5, name:"COSRX AHA/BHA тонер", desc:"Замена Lactic Acid когда закончится", cat:"Кислота", role:"acid", replacedBy:[], mini:true},
+  {id:6, name:"COSRX Low pH Gel Cleanser", desc:"Мягкая умывашка, низкий pH", cat:"Очищение", role:"cleanser", replacedBy:[35,36], mini:true},
+  {id:7, name:"COSRX Oil-free Lotion", desc:"Лёгкое увлажнение", cat:"Крем", role:"moisturizer", replacedBy:[8,27,28], mini:true},
+  {id:8, name:"KAHI Wrinkle Bounce", desc:"Лифтинг щек и носогубки, финальная окклюзия", cat:"Крем", role:"moisturizer", replacedBy:[27,28]},
+  {id:9, name:"I'm From Rice Toner", desc:"Сияние, выравнивание тона — замена Celimax тонера", cat:"Тонер", role:"toner", replacedBy:[]},
+  {id:10, name:"TRUE ALCHEMY Lactic Acid 9%", desc:"Химический пилинг, сияние, текстура", cat:"Кислота", role:"acid", replacedBy:[5]},
+  {id:11, name:"VT Retinol Reti-A Needle Shot", desc:"Стимуляция обновления, упругость", cat:"Ретинол", role:"retinol", replacedBy:[31]},
+  {id:12, name:"BY WISHTREND Bakuchiol Night Cream", desc:"Мягкий ретинол-эффект, регенерация без раздражения", cat:"Крем", role:"night_cream", replacedBy:[26,27,28]},
+  {id:13, name:"Dr.G SPF50+ PA++++", desc:"Защита — без него активы бесполезны", cat:"Санскрин", role:"sunscreen", replacedBy:[]},
+  {id:14, name:"ORIKO Royal Red Ginseng Eye Cream", desc:"Зона вокруг глаз, первые морщины", cat:"Глаза", role:"eye_cream", replacedBy:[15]},
+  {id:15, name:"S.Nature Aqua Soy Yogurt Eye Cream", desc:"Увлажнение зоны глаз, аденозин, squalane", cat:"Глаза", role:"eye_cream", replacedBy:[14]},
+  {id:16, name:"Fation NOSCA9 Pore Enhancing Serum", desc:"Поры, нано-ретинол на Т-зону, ниацинамид", cat:"Сыворотка", role:"serum_active", replacedBy:[]},
+  {id:17, name:"Yakong Panthenol Ampoule", desc:"Глубокое увлажнение, успокоение барьера", cat:"Ампула", role:"ampoule", replacedBy:[]},
+  {id:18, name:"Centellian24 PDRN Cream", desc:"Лифтинг, TECA-PDRN — проводник под гаджет Medicube", cat:"Крем", role:"pdrn", replacedBy:[]},
+  {id:19, name:"MERBELLE детокс-маска", desc:"Глубокое очищение, обновление — суббота", cat:"Маска", role:"mask_cleanse", replacedBy:[23,24]},
+
+  {id:21, name:"ISOI Blemish Care Eye & Wrinkle патчи", desc:"Ниацинамид, носогубки и зона глаз — суббота", cat:"Патчи", role:"patches", replacedBy:[]},
+  {id:22, name:"Dr.Reju-All PDRN маска (4шт)", desc:"PDRN-интенсив для упругости и сияния", cat:"Маска", role:"mask_pdrn", replacedBy:[]},
+  {id:23, name:"PAYOT Masque D'Tox éclat", desc:"Детокс, замена MERBELLE по функции", cat:"Маска", role:"mask_cleanse", replacedBy:[24], mini:true},
+  {id:24, name:"PAYOT MY PAYOT Masque nettoyant", desc:"Очищающая маска для сияния", cat:"Маска", role:"mask_cleanse", replacedBy:[23], mini:true},
+  {id:25, name:"PAYOT Source Masque baume", desc:"Увлажняющая маска-бальзам — воскресенье", cat:"Маска", role:"mask_hydro", replacedBy:[], mini:true},
+  {id:26, name:"PAYOT MY PAYOT Sleeping masque", desc:"Ночная маска — вечерний финиш вместо крема", cat:"Маска", role:"night_cream", replacedBy:[12,27,28], mini:true},
+  {id:27, name:"PAYOT MY PAYOT Crème vitaminée", desc:"Крем для сияния — замена утреннего крема", cat:"Крем", role:"moisturizer", replacedBy:[8,28], mini:true},
+  {id:28, name:"PAYOT Source Crème hydratante", desc:"Увлажняющий крем — замена утреннего крема", cat:"Крем", role:"moisturizer", replacedBy:[8,27], mini:true},
+  {id:29, name:"PAYOT NEO-SERUM концентрат", desc:"Ревитализирующая сыворотка, 5мл", cat:"Сыворотка", role:"serum_glow", replacedBy:[], mini:true},
+  {id:30, name:"PAYOT LISSE ампула с ГК (дневная)", desc:"Увлажнение, упругость — утром после тонера", cat:"Ампула", role:"ampoule", replacedBy:[], mini:true},
+  {id:31, name:"PAYOT LISSE ампула с ретинолом (ночная)", desc:"Обновление — только в ретинол-дни, 1мл", cat:"Ретинол", role:"retinol", replacedBy:[11], mini:true},
+  {id:32, name:"PAYOT матирующая эмульсия", desc:"Точечно на Т-зону утром до санскрина", cat:"Эмульсия", role:"mattifier", replacedBy:[], mini:true},
+  {id:33, name:"Микроиглы с витамином С", desc:"Сияние, выравнивание тона, коллаген — пятница", cat:"Актив", role:"vitamin_c", replacedBy:[]},
+  {id:34, name:"VIVIENNE SABO энзимная пудра", desc:"Энзимный пилинг", cat:"Пилинг", role:"enzyme", replacedBy:[], skipReason:"Не нужна пока есть Lactic Acid или AHA/BHA тонер — добавлять в рутину не стоит"},
+  {id:35, name:"ZEROID Pimprove гель", desc:"Следующая умывашка после Bioderma и Celimax", cat:"Очищение", role:"cleanser", replacedBy:[36]},
+  {id:36, name:"Round Lab Birch Juice Cleanser", desc:"Берёзовый сок — для отпуска и как запасная умывашка", cat:"Очищение", role:"cleanser", replacedBy:[35], mini:true},
+  {id:37, name:"GRACEFACE Hydrolyzed Collagen", desc:"Коллагеновые патчи для интенсивного увлажнения и упругости", cat:"Патчи", role:"patches", replacedBy:[21]},
+  {id:39, name:"MEDICAL COLLAGEN 3D ночной крем ProAge", desc:"Питательный ночной крем с коллагеном — BY WISHTREND лучше для твоих задач", cat:"Крем", role:"night_cream", replacedBy:[12,26], skipReason:"BY WISHTREND Bakuchiol закрывает ту же функцию лучше. Используй его или отдай маме."},
+  {id:38, name:"Medicube AGE-R Booster Pro", desc:"Гаджет 6-в-1 — в пути, придёт через месяц", cat:"Гаджет", role:"device", replacedBy:[], skipReason:"Гаджет — добавится в рутину когда приедет. Используй с Centellian24 PDRN кремом."},
+  {id:40, name:"Dr.Althea роликовое средство для глаз с ретинолом", desc:"Ретинол + роллер Гуаша, лифтинг и разглаживание зоны глаз, 25мл", cat:"Глаза", role:"eye_cream", replacedBy:[14,15]},
+  {id:41, name:"REJURAN Ампула Turnover", desc:"PDRN из ДНК лосося, регенерация и улучшение текстуры кожи, 30мл", cat:"Ампула", role:"ampoule", replacedBy:[17]},
+  {id:42, name:"SUNGBOON EDITOR Silk Peptide Lifting Ampoule", desc:"Пептиды шёлка и коллаген, лифтинг и упругость кожи, 40мл", cat:"Ампула", role:"ampoule", replacedBy:[17,41]},
+  {id:43, name:"Genabelle PDRN Vita Toning Ampoule", desc:"5000 ppm Salmon PDRN, тонизирование и восстановление кожи, 30мл", cat:"Ампула", role:"ampoule", replacedBy:[17,41]},
+  {id:44, name:"COSRX Ceramide Skin Barrier Moisturizing Mist", desc:"Церамиды и холестерин, мгновенное увлажнение и барьерная плёнка, 120мл", cat:"Эссенция", role:"essence", replacedBy:[4]},
+  {id:45, name:"Purito Seoul Multi Collagen Real Glow маска", desc:"PDRN 99% + коллаген 540 000 ppm, сияние и стеклянная кожа", cat:"Маска", role:"mask_cleanse", replacedBy:[19,23]},
+  {id:46, name:"PRO-CALM EGF Active Vital Cream", desc:"EGF-крем для восстановления жизненной силы и упругости кожи, 20мл", cat:"Крем", role:"moisturizer", replacedBy:[8,27]},
+  {id:48, name:"KLAVUU Nourishing Care Lip Sleeping Pack Vanilla", desc:"Масло жожоба, восстановление и разглаживание губ за ночь", cat:"Другое", role:"custom", replacedBy:[], skipReason:"Уход за губами — наноси как финальный шаг перед сном, отдельно от рутины для лица."},
+  {id:50, name:"Dr.LIENJANG Лифтинг-гелевая маска 49", desc:"Пептиды, коллаген, эластин — лифтинг и упругость, 5шт", cat:"Маска", role:"mask_special", replacedBy:[]},
+  {id:51, name:"23 Years old Badecasil P-Original Cream", desc:"Салициловая кислота + бетаин, отшелушивание и очищение пор, 30г", cat:"Крем", role:"moisturizer", replacedBy:[], skipReason:"Содержит салициловую кислоту — не совмещай с Lactic Acid и ретинолом в один вечер. Используй отдельно."},
+  {id:52, name:"Celimax Dual Barrier Mild Gel Cleanser", desc:"Нежный гель для умывания, двойной барьерный комплекс, 200мл", cat:"Очищение", role:"cleanser", replacedBy:[1,35,36]},
+  {id:53, name:"SKINPHORIA Aloe Vera Hydrating Serum", desc:"Алоэ вера, интенсивное увлажнение и успокоение кожи", cat:"Сыворотка", role:"serum_glow", replacedBy:[4,37]},
+  {id:54, name:"ROSLIN крем для лица Питание и забота", desc:"Питательный крем для восстановления и комфорта кожи", cat:"Крем", role:"moisturizer", replacedBy:[8,27,28]},
+];
+
+// Routine template: each step references a role
+const ROUTINE_TEMPLATE = [
+  { day:"Каждое утро", time:"morning", slots:[
+    {role:"cleanser", label:"Умывание", why:"Мягкое очищение без нарушения барьера"},
+    {role:"toner", label:"Тонер", why:"Восстановление pH, prep"},
+    {role:"essence", label:"Эссенция", why:"Увлажнение, glow"},
+    {role:"moisturizer", label:"Крем", why:"Лифтинг, питание, окклюзия"},
+    {role:"sunscreen", label:"Санскрин", why:"Защита — без него активы бесполезны"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона вокруг глаз"},
+  ]},
+  { day:"Пн, Ср — кислота", time:"evening", slots:[
+    {role:"cleanser", label:"Умывание", why:"Очищение"},
+    {role:"acid", label:"Кислота", why:"Химический пилинг, сияние, текстура"},
+    {role:"toner", label:"Тонер", why:"Восстановление pH после кислоты"},
+    {role:"ampoule", label:"Ампула", why:"Успокоение барьера если кожа реагирует"},
+    {role:"night_cream", label:"Ночной крем", why:"Регенерация, питание"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона глаз"},
+  ]},
+  { day:"Вт, Чт — ретинол", time:"evening", slots:[
+    {role:"cleanser", label:"Умывание", why:"Очищение"},
+    {role:"toner", label:"Тонер", why:"Prep перед активом"},
+    {role:"serum_active", label:"Сыворотка", why:"Поры, нано-ретинол на Т-зону"},
+    {role:"retinol", label:"Ретинол", why:"Обновление клеток, упругость"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона глаз"},
+  ]},
+  { day:"Пт — микроиглы + витамин С", time:"evening", slots:[
+    {role:"cleanser", label:"Умывание", why:"Очищение"},
+    {role:"toner", label:"Тонер", why:"Prep"},
+    {role:"vitamin_c", label:"Микроиглы с витамином С", why:"Сияние, коллаген"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона глаз"},
+  ]},
+  { day:"Сб — маска", time:"evening", slots:[
+    {role:"cleanser", label:"Умывание", why:"Очищение"},
+    {role:"mask_cleanse", label:"Маска", why:"Глубокое очищение, обновление"},
+    {role:"patches", label:"Патчи", why:"Носогубки и зона глаз"},
+    {role:"toner", label:"Тонер", why:"Восстановление после маски"},
+    {role:"moisturizer", label:"Крем", why:"Лифтинг, финальная окклюзия"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона глаз"},
+  ]},
+  { day:"Вс — восстановление", time:"evening", slots:[
+    {role:"cleanser", label:"Умывание", why:"Мягкое очищение"},
+    {role:"toner", label:"Тонер", why:"Барьер, увлажнение"},
+    {role:"ampoule", label:"Ампула", why:"Глубокое увлажнение после недели активов"},
+    {role:"moisturizer", label:"Крем", why:"Лифтинг, финальная окклюзия"},
+    {role:"eye_cream", label:"Крем для глаз", why:"Зона глаз"},
+  ]},
+];
+
+const VACATION_ROUTINE = [
+  { day:"Утро — каждый день", time:"morning", steps:[
+    {p:"Round Lab Birch Juice Cleanser", w:"Мягкое очищение"},
+    {p:"COSRX AHA/BHA тонер", w:"Через день — не каждый день на активном солнце"},
+    {p:"COSRX Snail 96 Mucin", w:"Увлажнение, glow"},
+    {p:"PAYOT NEO-SERUM концентрат", w:"Ревитализация, сияние"},
+    {p:"KAHI Wrinkle Bounce", w:"Лифтинг, окклюзия"},
+    {p:"Dr.G SPF50+", w:"Обновляй каждые 2 часа на солнце"},
+    {p:"S.Nature Eye Cream", w:"Зона глаз"},
+  ]},
+  { day:"Вечер — каждый день", time:"evening", steps:[
+    {p:"Round Lab Birch Juice Cleanser", w:"Очищение"},
+    {p:"COSRX Snail 96 Mucin", w:"Восстановление и увлажнение"},
+    {p:"PAYOT Source Masque baume", w:"2-3 раза за поездку — увлажнение после солнца"},
+    {p:"PAYOT MY PAYOT Sleeping masque", w:"Вместо крема в дни без маски"},
+    {p:"KAHI Wrinkle Bounce", w:"Финиш"},
+    {p:"S.Nature Eye Cream", w:"Зона глаз"},
+  ]},
+];
+
+// ─── STATE ───────────────────────────────────────────────
+let state = loadState();
+
+function loadState() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sc_state_v3') || 'null');
+    if (s) { if (s.season === 'base') s.season = null; return s; }
+    const v2 = JSON.parse(localStorage.getItem('sc_state_v2') || 'null');
+    if (v2) return { ...v2, opened: [], season: null };
+  } catch(e) {}
+  const defaultActive = [1,2,4,8,10,11,12,13,15,16,17,19,21,33];
+  return { active: defaultActive, finished: [], custom: [], suggestions: [], opened: [], season: null };
+}
+
+function saveState() {
+  try { localStorage.setItem('sc_state_v3', JSON.stringify(state)); } catch(e) {}
+}
+
+function allProducts() { return [...PRODUCTS, ...state.custom]; }
+
+// ─── LOGIC ───────────────────────────────────────────────
+let searchQuery = '';
+let activeFilter = 'all';
+
+function isActive(id) { return state.active.includes(id); }
+function isFinished(id) { return state.finished.includes(id); }
+function isOpened(id) { return (state.opened || []).includes(id); }
+
+function toggleOpened(id, e) {
+  e && e.stopPropagation();
+  if (!state.opened) state.opened = [];
+  if (isOpened(id)) {
+    state.opened = state.opened.filter(o => o !== id);
+    showToast('Убрана отметка «открыто»');
+  } else {
+    state.opened.push(id);
+    showToast('Отмечено как открытое');
+  }
+  saveState();
+  render();
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  ['all','active','opened','finished'].forEach(k => {
+    const btn = document.getElementById('filter-' + k);
+    if (!btn) return;
+    btn.style.background = k === f ? 'var(--surface3)' : 'var(--surface2)';
+    btn.style.color = k === f ? 'var(--text)' : 'var(--text-muted)';
+    btn.style.borderColor = k === f ? 'var(--border-strong)' : 'var(--border)';
+  });
+  renderProducts();
+}
+
+// ─── SEASON PRESETS ──────────────────────────────────────
+const SEASON_NOTES = {
+  summer: '🌞 Лето: ретинол и ночные кремы исключены из рутины. Лёгкие текстуры, SPF строго обязателен.',
+  winter: '❄️ Зима: рутина расширена — приоритет барьеру и питанию. Ампулы и окклюзивные кремы в рутине.',
+  vacation: '✈️ Отпуск: кислоты, ретинол и витамин С исключены. В приоритете миниатюры, SPF каждые 2 часа.',
+};
+
+// Roles to exclude per season from routine
+const SEASON_EXCLUDE = {
+  summer: ['night_cream','retinol'],
+  winter: [],
+  vacation: ['acid','retinol','vitamin_c','enzyme'],
+};
+
+// Season-specific step additions (roles to prioritize)
+
+// Season descriptions for routine note
+const SEASON_ROUTINE_CHANGES = {
+  summer: 'Ретинол и плотные ночные кремы исключены. Акцент на лёгкие текстуры и SPF.',
+  winter: 'Добавлены ампулы и окклюзивные кремы для барьера. Больше питания.',
+  vacation: 'Кислоты, ретинол, витамин С исключены. Только мягкий уход и SPF.',
+};
+
+function setSeason(s) {
+  state.season = s || null;
+  saveState();
+  syncSeasonSelect();
+  const note = document.getElementById('routine-note');
+  if (note) note.textContent = state.season ? SEASON_NOTES[state.season] : 'Рутина собирается автоматически на основе активных средств.';
+  render();
+}
+
+function syncSeasonSelect() {
+  const btn = document.getElementById('season-btn');
+  const label = document.getElementById('season-label');
+  if (!btn || !label) return;
+  const opts = { '': '🌿 Сезон', summer: '🌞 Лето', winter: '❄️ Зима', vacation: '✈️ Отпуск' };
+  const s = state.season || '';
+  label.textContent = opts[s] || '🌿 Сезон';
+  btn.classList.toggle('has-value', !!s);
+  document.querySelectorAll('.s-dropdown-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.value === s);
+  });
+}
+
+function toggleSeasonMenu() {
+  const menu = document.getElementById('season-menu');
+  const btn = document.getElementById('season-btn');
+  if (!menu) return;
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+}
+
+function pickSeason(el, val) {
+  document.getElementById('season-menu').classList.remove('open');
+  document.getElementById('season-btn').classList.remove('open');
+  setSeason(val);
+}
+
+// close on outside click
+document.addEventListener('click', e => {
+  const dd = document.getElementById('season-dropdown');
+  if (dd && !dd.contains(e.target)) {
+    document.getElementById('season-menu')?.classList.remove('open');
+    document.getElementById('season-btn')?.classList.remove('open');
+  }
+});
+
+function toggleFinished(id, e) {
+  e && e.stopPropagation();
+  if (isFinished(id)) {
+    state.finished = state.finished.filter(f => f !== id);
+    state.active.push(id);
+    state.suggestions = state.suggestions.filter(s => s.finishedId !== id);
+    saveState(); render();
+    showToast('Средство возвращено в рутину');
+    return;
+  }
+  state.finished.push(id);
+  state.active = state.active.filter(a => a !== id);
+  if (state.opened) state.opened = state.opened.filter(o => o !== id);
+  const product = allProducts().find(p => p.id === id);
+  if (product && product.replacedBy && product.replacedBy.length > 0) {
+    const replacements = product.replacedBy
+      .map(rid => allProducts().find(p => p.id === rid))
+      .filter(p => p && !isFinished(p.id));
+    const openedReplacement = replacements.find(r => isOpened(r.id) && !isActive(r.id));
+    const anyReplacement = replacements.find(r => !isActive(r.id));
+    const replacement = openedReplacement || anyReplacement;
+    if (replacement) {
+      state.active.push(replacement.id);
+      const note = openedReplacement ? ' (уже открыто ✓)' : '';
+      state.suggestions.push({ finishedId: id, replacementId: replacement.id, msg: `«${product.name}» закончилось → добавлено «${replacement.name}»${note}` });
+      showToast(`Замена: ${replacement.name}${note}`);
+    } else {
+      state.suggestions.push({ finishedId: id, replacementId: null, msg: `«${product.name}» закончилось. Замены нет — нужно купить.` });
+      showToast(`${product.name} закончилось`);
+    }
+  } else {
+    showToast(`${product ? product.name : 'Средство'} закончилось`);
+  }
+  saveState(); render();
+}
+
+// long press support
+let pressTimer = null;
+function onCardPointerDown(id) {
+  pressTimer = setTimeout(() => { pressTimer = null; toggleOpened(id, null); }, 600);
+}
+function onCardPointerUp() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
+
+function tapCard(id) {
+  if (isFinished(id)) return;
+  const product = allProducts().find(p => p.id === id);
+  if (!product) return;
+
+  if (product.skipReason) {
+    showToast(product.skipReason);
+    return;
+  }
+
+  if (isActive(id)) {
+    state.active = state.active.filter(a => a !== id);
+    saveState();
+    render();
+    showToast(`Убрано из рутины`);
+  } else {
+    state.active.push(id);
+    saveState();
+    render();
+    showToast(`Добавлено в рутину`);
+  }
+}
+
+// ─── ADD MODAL ───────────────────────────────────────────
+let pendingProduct = null;
+
+function openAddModal() {
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeAddModal(e) {
+  if (!e || e.target === document.getElementById('add-modal')) {
+    document.getElementById('add-modal').classList.remove('open');
+    resetAddModal();
+  }
+}
+
+function resetAddModal() {
+  document.getElementById('add-step1').style.display = 'block';
+  document.getElementById('add-step2').style.display = 'none';
+  document.getElementById('add-loading').style.display = 'none';
+  document.getElementById('add-error').style.display = 'none';
+  document.getElementById('add-name').value = '';
+  document.getElementById('analyze-btn').disabled = false;
+  pendingProduct = null;
+}
+
+async function analyzeProduct() {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) {
+    const err = document.getElementById('add-error');
+    err.textContent = 'Введи название средства';
+    err.style.display = 'block';
+    return;
+  }
+  document.getElementById('add-error').style.display = 'none';
+  document.getElementById('add-loading').style.display = 'block';
+  document.getElementById('analyze-btn').disabled = true;
+
+  // Local analysis by keywords
+  await new Promise(r => setTimeout(r, 400));
+
+  const n = name.toLowerCase();
+
+  const RULES = [
+    { kw:['cleanser','cleansing','умывалк','гель для умывания','пенка','foam','gel cleanser','cleanse','cleansing balm','baume','cleansing oil','micellar','мицеллярн','balsam','balm cleanser'], cat:'Очищение', role:'cleanser', desc:'Мягкое очищение кожи лица' },
+    { kw:['toner','тонер','lotion skin','water essence','first essence'], cat:'Тонер', role:'toner', desc:'Балансировка pH и увлажнение после очищения' },
+    { kw:['essence','эссенция','mucin','snail','улитк'], cat:'Эссенция', role:'essence', desc:'Глубокое увлажнение и питание кожи' },
+    { kw:['spf','sunscreen','sun cream','солнцезащит','uv','pa+'], cat:'Санскрин', role:'sunscreen', desc:'Защита от УФ-излучения — обязательный шаг утром' },
+    { kw:['retinol','ретинол','retin','retinal','reti-a','needle shot','bakuchiol','бакучиол'], cat:'Ретинол', role:'retinol', desc:'Обновление клеток, упругость и разглаживание морщин', tip:'Не совмещай с кислотами в один вечер. Используй только вечером.' },
+    { kw:['aha','bha','lactic acid','glycolic','молочная кислот','пилинг','exfoliant','пилин','acid toner','кислот'], cat:'Кислота', role:'acid', desc:'Химическое отшелушивание, сияние и выравнивание текстуры', tip:'Не совмещай с ретинолом. Обязателен SPF утром после использования.' },
+    { kw:['vitamin c','витамин с','ascorbic','аскорбин','brightening serum','осветляющ'], cat:'Актив', role:'vitamin_c', desc:'Витамин С для сияния и выравнивания тона кожи', tip:'Утром — под SPF. Не совмещай с ретинолом в один вечер.' },
+    { kw:['eye cream','крем для глаз','eye','глаза','веко','under eye','eye gel','eye serum','eye balm'], cat:'Глаза', role:'eye_cream', desc:'Увлажнение и уход за нежной кожей вокруг глаз' },
+    { kw:['ampoule','ампул','serum ampoule','концентрат','concentrate','booster','бустер'], cat:'Ампула', role:'ampoule', desc:'Концентрированный уход с активными ингредиентами' },
+    { kw:['serum','сыворотк','essence serum'], cat:'Сыворотка', role:'serum_glow', desc:'Активная сыворотка для целевого ухода' },
+    { kw:['night cream','ночной крем','sleeping cream','night moisturizer','sleeping mask','ночная маска','sleeping pack'], cat:'Крем', role:'night_cream', desc:'Интенсивное восстановление и питание кожи ночью' },
+    { kw:['moisturizer','moisturising','крем для лица','day cream','дневной крем','face cream','moisture cream','hydrating cream'], cat:'Крем', role:'moisturizer', desc:'Увлажнение и питание кожи' },
+    { kw:['sheet mask','маска тканевая','тканевая маска','pdrn mask','collagen mask','маска для лица','gel mask','гелевая маска','rubber mask','маска с'], cat:'Маска', role:'mask_cleanse', desc:'Интенсивный уход и питание кожи в формате маски' },
+    { kw:['мист','mist','spray','спрей','фиксатор'], cat:'Эссенция', role:'essence', desc:'Лёгкое увлажнение и освежение кожи в течение дня' },
+    { kw:['патч','patch','eye patch','патчи'], cat:'Патчи', role:'patches', desc:'Интенсивный уход для зоны глаз и проблемных зон' },
+    { kw:['pdrn','полинуклеотид','salmon dna','лосос','rejuran'], cat:'Ампула', role:'pdrn', desc:'PDRN для регенерации, упругости и восстановления кожи' },
+    { kw:['enzyme','энзим','энзимная пудра','powder cleanser'], cat:'Пилинг', role:'enzyme', desc:'Энзимное отшелушивание для мягкого обновления кожи', tip:'Не нужна если уже используешь кислоту.' },
+    { kw:['lip','губ','baume lèvres'], cat:'Другое', role:'custom', desc:'Уход за губами', tip:'Наноси как финальный шаг перед сном, отдельно от рутины лица.' },
+    { kw:['device','гаджет','прибор','массажер','massager','booster pro','инструмент'], cat:'Гаджет', role:'device', desc:'Устройство для аппаратного ухода за кожей', tip:'Используй с проводящей сывороткой или кремом (PDRN, гиалурон).' },
+  ];
+
+  let result = null;
+  for (const rule of RULES) {
+    if (rule.kw.some(k => n.includes(k))) {
+      result = rule;
+      break;
+    }
+  }
+
+  if (!result) {
+    // fallback: guess from common patterns
+    if (n.includes('cream') || n.includes('крем')) result = { cat:'Крем', role:'moisturizer', desc:'Крем для ухода за кожей лица' };
+    else if (n.includes('gel') || n.includes('гель')) result = { cat:'Очищение', role:'cleanser', desc:'Гель для ухода за кожей' };
+    else if (n.includes('mask') || n.includes('маска')) result = { cat:'Маска', role:'mask_cleanse', desc:'Маска для ухода за кожей' };
+    else result = { cat:'Другое', role:'custom', desc:'Средство для ухода за кожей' };
+  }
+
+  pendingProduct = {
+    name: name,
+    desc: result.desc || 'Средство для ухода за кожей',
+    cat: result.cat || 'Другое',
+    role: result.role || 'custom',
+    tip: result.tip || '',
+  };
+
+  document.getElementById('preview-name').textContent = pendingProduct.name;
+  document.getElementById('preview-desc').textContent = pendingProduct.desc;
+  document.getElementById('preview-cat').textContent = pendingProduct.cat;
+
+  const roleTag = document.getElementById('preview-role-tag');
+  if (pendingProduct.role && pendingProduct.role !== 'custom') {
+    roleTag.textContent = pendingProduct.role;
+    roleTag.style.display = 'inline-block';
+  } else {
+    roleTag.style.display = 'none';
+  }
+
+  const tipEl = document.getElementById('preview-tip');
+  if (pendingProduct.tip) {
+    tipEl.textContent = pendingProduct.tip;
+    tipEl.style.display = 'block';
+  } else {
+    tipEl.style.display = 'none';
+  }
+
+  document.getElementById('add-loading').style.display = 'none';
+  document.getElementById('add-step1').style.display = 'none';
+  document.getElementById('add-step2').style.display = 'block';
+  document.getElementById('analyze-btn').disabled = false;
+}
+
+function saveNewProduct() {
+  if (!pendingProduct) return;
+  const active = document.querySelector('input[name="add-active"]:checked').value === '1';
+  const id = Date.now();
+  const newP = {
+    id,
+    name: pendingProduct.name,
+    desc: pendingProduct.desc,
+    cat: pendingProduct.cat,
+    role: pendingProduct.role,
+    replacedBy: [],
+    mini: false,
+    custom: true,
+  };
+  state.custom.push(newP);
+  if (active) state.active.push(id);
+  saveState();
+  document.getElementById('add-modal').classList.remove('open');
+  resetAddModal();
+  render();
+  showToast(`«${newP.name}» добавлено`);
+}
+
+// ─── TIPS ENGINE ─────────────────────────────────────────
+// Defines what each day ideally needs, with human-readable gap descriptions
+
+// Which roles share the same evening day
+
+// Roles that are scheduled on overlapping days (both could appear same evening)
+function rolesOnSameDay(roleA, roleB) {
+  const dayMap = {
+    acid:        ['mon_wed'],
+    night_cream: ['mon_wed'],
+    ampoule:     ['sun'],
+    retinol:     ['tue_thu'],
+    serum_active:['tue_thu'],
+    vitamin_c:   ['fri'],
+    mask_cleanse:['sat'],
+    patches:     ['sat'],
+    cleanser:    ['every'],
+    toner:       ['every'],
+    essence:     ['every'],
+    moisturizer: ['every'],
+    sunscreen:   ['every'],
+    eye_cream:   ['every'],
+    mattifier:   ['every'],
+  };
+  const daysA = dayMap[roleA] || ['every'];
+  const daysB = dayMap[roleB] || ['every'];
+  if (daysA.includes('every') || daysB.includes('every')) return true;
+  return daysA.some(d => daysB.includes(d));
+}
+
+function renderCompatWarningsInline(container) {
+  const active = allProducts().filter(p => isActive(p.id));
+  const warnings = [];
+  for (let i = 0; i < active.length; i++) {
+    for (let j = i+1; j < active.length; j++) {
+      const pA = active[i], pB = active[j];
+      // Only warn if both are scheduled on the same day
+      if (!rolesOnSameDay(pA.role, pB.role)) continue;
+      for (const rule of COMPAT_RULES) {
+        if (rule.result !== 'ok' && rule.roles.includes(pA.role) && rule.roles.includes(pB.role)) {
+          warnings.push({ pA, pB, rule });
+        }
+      }
+    }
+  }
+  if (warnings.length === 0) return;
+
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.textContent = '⚗️ Конфликты совместимости';
+  container.appendChild(label);
+
+  warnings.forEach(({ pA, pB, rule }) => {
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    const isBad = rule.result === 'bad';
+    const iconClass = isBad ? 'warn' : 'info';
+    const dayLabel = isBad ? '✕ Не совмещать' : '⚠ Осторожно';
+    const fix = isBad
+      ? `Чередуй в разные вечера: «${pA.name}» — Пн/Ср, «${pB.name}» — Вт/Чт.`
+      : `Используй в разное время суток или разные дни.`;
+    const removeBtn = isBad
+      ? `<div class="tip-suggestions" style="margin-top:8px">
+           <button class="tip-product-btn" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger)" onclick="removeFromTip(${pA.id})">
+             <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+             Убрать: ${pA.name}
+           </button>
+           <button class="tip-product-btn" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger)" onclick="removeFromTip(${pB.id})">
+             <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+             Убрать: ${pB.name}
+           </button>
+         </div>` : '';
+    card.innerHTML = `
+      <div class="tip-header">
+        <div class="tip-icon ${iconClass}"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round">
+          ${isBad ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'}
+        </svg></div>
+        <div><div class="tip-day">${dayLabel}</div><div class="tip-title">${pA.name} + ${pB.name}</div></div>
+      </div>
+      <div class="tip-body">${rule.msg}</div>
+      <div style="font-size:12px;color:var(--accent);background:var(--accent-light);border-radius:6px;padding:7px 10px;margin-bottom:${isBad ? '8px' : '0'}">💡 ${fix}</div>
+      ${removeBtn}
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ─── REMOVE / ADD RECOMMENDATIONS ───────────────────────
+
+// Products that are actively harmful if skin is normal/clean
+function buildSeasonRemoveRules() {
+  const season = state.season || null;
+  const rules = [
+    {
+      role: 'enzyme',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'acid').length > 0,
+      title: 'Энзимная пудра лишняя',
+      reason: 'У тебя уже есть кислотное отшелушивание (Lactic Acid или AHA/BHA). Два вида пилинга одновременно — избыточная нагрузка на барьер.',
+      advice: 'Убери из рутины — оставь как замену если закончится кислота.',
+    },
+    {
+      role: 'night_cream',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'night_cream').length > 1,
+      title: 'Два ночных крема одновременно',
+      reason: 'В рутине больше одного ночного крема. Кожа не успевает впитать всё.',
+      advice: 'Оставь один, второй — в запас на замену.',
+    },
+    {
+      role: 'cleanser',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'cleanser').length > 1,
+      title: 'Несколько умывашек в рутине',
+      reason: 'Умывашки не дополняют друг друга — они взаимозаменяемы.',
+      advice: 'Оставь одну основную. Остальные — в запас.',
+    },
+  ];
+
+  // Season-specific remove rules
+  if (season === 'summer') {
+    rules.push({
+      role: 'night_cream',
+      condition: () => {
+        // Recommend removing retinol-type night creams (bakuchiol) in summer — too heavy
+        const active = allProducts().filter(p => isActive(p.id) && p.role === 'night_cream');
+        return active.length > 0;
+      },
+      title: '🌞 Лето: плотный ночной крем лишний',
+      reason: 'Летом кожа вырабатывает больше себума — плотный ночной крем (особенно с ретинолом) может забивать поры и перегревать кожу.',
+      advice: 'Замени на лёгкую ампулу или сыворотку. BY WISHTREND Bakuchiol лучше отложить до осени.',
+    });
+    rules.push({
+      role: 'retinol',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'retinol').length > 0,
+      title: '🌞 Лето: ретинол требует осторожности',
+      reason: 'Ретинол повышает фотосенсибилизацию. Летом риск пигментации выше — особенно если проводишь время на улице.',
+      advice: 'Если используешь ретинол летом — строго только вечером и обязателен SPF каждые 2 часа. Рассмотри перерыв на лето.',
+    });
+  }
+
+  if (season === 'vacation') {
+    rules.push({
+      role: 'acid',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'acid').length > 0,
+      title: '✈️ Отпуск: кислоты под запретом',
+      reason: 'На активном солнце кислоты вызывают ожоги и пигментацию. В отпуске это критичный риск.',
+      advice: 'Убери кислоты на время отпуска. Вернёшь когда приедешь.',
+    });
+    rules.push({
+      role: 'retinol',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'retinol').length > 0,
+      title: '✈️ Отпуск: ретинол нужно убрать',
+      reason: 'Ретинол + активное солнце = риск ожогов и стойкой пигментации.',
+      advice: 'Убери ретинол на весь период отпуска.',
+    });
+  }
+
+  return rules;
+}
+
+// Products not in routine but should be recommended
+const ADD_RULES = [
+  {
+    role: 'sunscreen',
+    condition: () => !allProducts().find(p => isActive(p.id) && p.role === 'sunscreen'),
+    title: 'Нет санскрина',
+    reason: 'Без SPF все активы (ретинол, кислоты, витамин С) работают вхолостую и ускоряют фотостарение. Это критичный пробел.',
+    day: 'каждое утро', time: 'утро', step: 5,
+    critical: true,
+  },
+  {
+    role: 'eye_cream',
+    condition: () => !allProducts().find(p => isActive(p.id) && p.role === 'eye_cream'),
+    title: 'Нет крема для глаз',
+    reason: 'Кожа вокруг глаз в 4 раза тоньше — обычный крем не подходит. При использовании ретинола крем для глаз обязателен.',
+    day: 'каждый день', time: 'утро и вечер', step: 6,
+    critical: false,
+  },
+  {
+    role: 'ampoule',
+    condition: () => !allProducts().find(p => isActive(p.id) && (p.role === 'ampoule' || p.role === 'pdrn')),
+    title: 'Нет ампулы для восстановления',
+    reason: 'В день восстановления (вс) нет концентрированного увлажнения — барьер после недели активов не восстанавливается полноценно.',
+    day: 'Вс', time: 'вечер', step: 3,
+    critical: false,
+  },
+  {
+    role: 'moisturizer',
+    condition: () => !allProducts().find(p => isActive(p.id) && p.role === 'moisturizer'),
+    title: 'Нет дневного крема',
+    reason: 'Без окклюзии утром влага испаряется — все предыдущие шаги теряют эффективность.',
+    day: 'каждое утро', time: 'утро', step: 4,
+    critical: true,
+  },
+];
+
+// Day context for roles
+const ROLE_DAY = {
+  acid:       { day:'Пн, Ср', time:'вечер', step:2 },
+  retinol:    { day:'Вт, Чт', time:'вечер', step:3 },
+  vitamin_c:  { day:'Пт', time:'вечер', step:3 },
+  serum_active:{ day:'Вт, Чт', time:'вечер', step:3 },
+  cleanser:   { day:'каждый день', time:'утро и вечер', step:1 },
+  toner:      { day:'каждый день', time:'утро и вечер', step:2 },
+  essence:    { day:'каждое утро', time:'утро', step:3 },
+  moisturizer:{ day:'каждый день', time:'утро', step:4 },
+  sunscreen:  { day:'каждое утро', time:'утро', step:5 },
+  eye_cream:  { day:'каждый день', time:'утро и вечер', step:6 },
+  night_cream:{ day:'Пн, Ср', time:'вечер', step:5 },
+  ampoule:    { day:'Вс', time:'вечер', step:3 },
+  mask_cleanse:{ day:'Сб', time:'вечер', step:2 },
+  patches:    { day:'Сб', time:'вечер', step:3 },
+  pdrn:       { day:'любой вечер кроме ретинола', time:'вечер', step:3 },
+};
+
+function buildRemoveAdvice() {
+  const rules = buildSeasonRemoveRules();
+  const advice = [];
+  const seen = new Set();
+  rules.forEach(rule => {
+    const targets = allProducts().filter(p => isActive(p.id) && p.role === rule.role);
+    if (targets.length > 0 && rule.condition()) {
+      // avoid duplicate titles
+      if (!seen.has(rule.title)) {
+        seen.add(rule.title);
+        advice.push({ ...rule, targets });
+      }
+    }
+  });
+  return advice;
+}
+
+function buildAddAdvice() {
+  const season = state.season || null;
+  const excluded = season ? (SEASON_EXCLUDE[season] || []) : [];
+  const advice = [];
+  ADD_RULES.forEach(rule => {
+    if (excluded.includes(rule.role)) return;
+    if (rule.condition()) {
+      // find candidates from arsenal
+      const candidates = allProducts().filter(p =>
+        p.role === rule.role && !isFinished(p.id) && !isActive(p.id)
+      );
+      advice.push({ ...rule, candidates });
+    }
+  });
+  return advice;
+}
+
+function renderRemoveAdvice(container) {
+  const items = buildRemoveAdvice();
+  if (items.length === 0) return;
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.style.marginTop = '0';
+  label.textContent = '🗑 Стоит убрать из рутины';
+  container.appendChild(label);
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    const targetsHtml = item.targets.map(p => `
+      <button class="tip-product-btn" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger)" onclick="removeFromTip(${p.id})">
+        <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        Убрать: ${p.name}
+      </button>`).join('');
+    card.innerHTML = `
+      <div class="tip-header">
+        <div class="tip-icon warn"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+        <div><div class="tip-day">⚠ Лишнее в рутине</div><div class="tip-title">${item.title}</div></div>
+      </div>
+      <div class="tip-body">${item.reason}</div>
+      <div style="font-size:12px;color:var(--accent);background:var(--accent-light);border-radius:6px;padding:7px 10px;margin-bottom:8px">💡 ${item.advice}</div>
+      <div class="tip-suggestions">${targetsHtml}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderAddAdvice(container) {
+  const items = buildAddAdvice();
+  if (items.length === 0) return;
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.textContent = '✨ Стоит добавить в рутину';
+  container.appendChild(label);
+
+  items.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    const dayCtx = ROLE_DAY[item.role] || { day: 'по рутине', time: '', step: 0 };
+
+    const candidatesHtml = item.candidates.length > 0
+      ? item.candidates.slice(0, 3).map(c => {
+          const opened = isOpened(c.id);
+          const openedBadge = opened ? ' <span style="font-size:10px;opacity:0.7">🔓 уже открыто</span>' : '';
+          const whereText = `Шаг ${dayCtx.step}, ${dayCtx.day}, ${dayCtx.time}`;
+          return `
+            <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:4px">
+              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px">${c.name}${openedBadge}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${c.desc}</div>
+              <div style="font-size:10px;color:var(--accent);margin-bottom:6px">📍 ${whereText}</div>
+              <button class="tip-product-btn" onclick="addFromTip(${c.id})">
+                <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Добавить в рутину
+              </button>
+            </div>`;
+        }).join('')
+      : `<div style="font-size:12px;color:var(--text-hint);padding:4px 0">Подходящего средства нет в арсенале — нужно купить</div>`;
+
+    card.innerHTML = `
+      <div class="tip-header">
+        <div class="tip-icon ${item.critical ? 'warn' : 'info'}">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round">
+            ${item.critical
+              ? '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'
+              : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}
+          </svg>
+        </div>
+        <div>
+          <div class="tip-day">${item.critical ? '⚡ критично' : '💡 рекомендация'}</div>
+          <div class="tip-title">${item.title}</div>
+        </div>
+      </div>
+      <div class="tip-body">${item.reason}</div>
+      <div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">📍 Куда: шаг ${dayCtx.step} — ${dayCtx.day}, ${dayCtx.time}</div>
+      ${candidatesHtml}
+    `;
+    container.appendChild(card);
+  });
+}
+
+function removeFromTip(id) {
+  state.active = state.active.filter(a => a !== id);
+  saveState();
+  render();
+  const p = allProducts().find(x => x.id === id);
+  showToast(`«${p ? p.name : 'Средство'}» убрано из рутины`);
+}
+
+function renderTips() {
+  const list = document.getElementById('tips-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  // Clear old opened area (now rendered inline)
+
+  // 0. Opened products
+  renderOpenedTips(list);
+
+  // 0b. Compat warnings inline
+  renderCompatWarningsInline(list);
+
+  // 1. Vacation mini advice
+  const season = state.season || null;
+  if (season === 'vacation') {
+    const nonMiniActive = allProducts().filter(p => isActive(p.id) && !p.mini && p.cat !== 'Гаджет');
+    if (nonMiniActive.length > 0) {
+      const div = document.createElement('div');
+      div.className = 'tip-card';
+      div.innerHTML = `
+        <div class="tip-header">
+          <div class="tip-icon warn"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+          <div><div class="tip-day">✈️ отпуск</div><div class="tip-title">Полноразмерные средства в рутине</div></div>
+        </div>
+        <div class="tip-body">В отпуск лучше брать миниатюры — они занимают меньше места и проходят ручную кладь.</div>
+        <div class="tip-suggestions">
+          ${nonMiniActive.slice(0,4).map(p => {
+            const mini = allProducts().find(m => m.role === p.role && m.mini && !isFinished(m.id) && m.id !== p.id);
+            return mini
+              ? `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="color:var(--text-muted)">${p.name}</span><button onclick="addFromTip(${mini.id})" class="tip-product-btn" style="padding:3px 8px;flex-shrink:0">→ ${mini.name}</button></div>`
+              : '';
+          }).filter(Boolean).join('') || '<div style="font-size:12px;color:var(--text-hint)">Миниатюр для замены нет — берёшь как есть</div>'}
+        </div>
+      `;
+      list.appendChild(div);
+    }
+  }
+
+  // 2. Remove advice
+  renderRemoveAdvice(list);
+
+  // 3. Add advice
+  renderAddAdvice(list);
+
+  // 4. Empty state
+  if (!list.firstChild) {
+    list.innerHTML = `
+      <div class="tips-all-good">
+        <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Рутина сбалансирована
+      </div>`;
+  }
+}
+
+function addFromTip(id) {
+  if (!isActive(id) && !isFinished(id)) {
+    state.active.push(id);
+    saveState();
+    render();
+    const p = allProducts().find(x => x.id === id);
+    showToast(`«${p ? p.name : 'Средство'}» добавлено в рутину`);
+  }
+}
+
+// ─── COMPATIBILITY ENGINE ────────────────────────────────
+const COMPAT_RULES = [
+  { roles:['acid','retinol'], result:'bad', msg:'Кислоты и ретинол нельзя использовать вместе в один вечер — риск раздражения и повреждения барьера. Чередуй: кислота Пн/Ср, ретинол Вт/Чт.' },
+  { roles:['acid','vitamin_c'], result:'warn', msg:'Витамин С и кислоты совместимы утром, но могут раздражать чувствительную кожу. Лучше использовать в разное время.' },
+  { roles:['retinol','vitamin_c'], result:'warn', msg:'Витамин С и ретинол — сильная комбинация. Лучше: витамин С утром, ретинол вечером.' },
+  { roles:['retinol','enzyme'], result:'warn', msg:'Ретинол и энзимный пилинг — слишком много отшелушивания. Используй в разные дни.' },
+  { roles:['acid','enzyme'], result:'warn', msg:'Два вида пилинга одновременно — перегрузка для кожи. Чередуй.' },
+  { roles:['sunscreen','moisturizer'], result:'ok', msg:'Отличная пара для утреннего ухода: сначала крем, потом санскрин поверх.' },
+  { roles:['toner','essence'], result:'ok', msg:'Идеально совместимы: тонер подготавливает кожу, эссенция усиливает увлажнение.' },
+  { roles:['ampoule','moisturizer'], result:'ok', msg:'Хорошая пара: ампула наносится тонким слоем, крем запечатывает.' },
+  { roles:['retinol','moisturizer'], result:'ok', msg:'Хорошо: крем наносится поверх ретинола — смягчает возможное раздражение.' },
+  { roles:['pdrn','device'], result:'ok', msg:'Идеальная пара: PDRN крем как проводник под гаджет Medicube — максимальная эффективность электропорации.' },
+  { roles:['acid','toner'], result:'ok', msg:'Кислота — первый активный шаг, тонер после — для восстановления pH. Правильный порядок.' },
+  { roles:['essence','eye_cream'], result:'ok', msg:'Совместимы, но наноси на разные зоны: эссенция — лицо, крем для глаз — вокруг глаз.' },
+  { roles:['retinol','eye_cream'], result:'ok', msg:'Ретинол не наносится на зону глаз, поэтому крем для глаз обязателен в ретинол-дни.' },
+  { roles:['night_cream','retinol'], result:'ok', msg:'Ретинол → подождать 10 минут → нанести крем поверх. Крем снижает раздражение.' },
+  { roles:['mattifier','sunscreen'], result:'ok', msg:'Хорошо: матирующая эмульсия точечно на Т-зону, санскрин поверх всего лица.' },
+];
+
+// ─── OPENED TIPS ─────────────────────────────────────────
+function renderOpenedTips(container) {
+  const season = state.season || null;
+  const excluded = season ? (SEASON_EXCLUDE[season] || []) : [];
+
+  const opened = (state.opened || [])
+    .map(id => allProducts().find(p => p.id === id))
+    .filter(p => p && !isFinished(p.id) && !isActive(p.id))
+    .filter(p => !excluded.includes(p.role)); // skip season-excluded roles
+  if (opened.length === 0) return;
+
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.style.marginTop = '0';
+  label.textContent = '🔓 Открыто — не забудь использовать';
+  container.appendChild(label);
+
+  opened.forEach(p => {
+    const dayCtx = ROLE_DAY[p.role] || { day: 'по рутине', time: '', step: 0 };
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    card.innerHTML = `
+      <div class="tip-header">
+        <div class="tip-icon info"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
+        <div><div class="tip-day">🔓 открыто</div><div class="tip-title">${p.name}</div></div>
+      </div>
+      <div class="tip-body">${p.desc}</div>
+      <div style="font-size:11px;color:var(--accent);margin-bottom:8px">📍 Куда: шаг ${dayCtx.step} — ${dayCtx.day}, ${dayCtx.time}</div>
+      <button class="tip-product-btn" onclick="addFromTip(${p.id})">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Добавить в рутину
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function buildRoutine() {
+  const season = state.season || null;
+  const excluded = season ? (SEASON_EXCLUDE[season] || []) : [];
+  const active = allProducts().filter(p => isActive(p.id));
+  const byRole = {};
+  active.forEach(p => {
+    if (!byRole[p.role]) byRole[p.role] = [];
+    byRole[p.role].push(p);
+  });
+
+  // For vacation use static routine
+  if (season === 'vacation') return VACATION_ROUTINE.map(d => ({
+    day: d.day, time: d.time,
+    steps: d.steps.map(s => ({p: s.p, w: s.w}))
+  }));
+
+  return ROUTINE_TEMPLATE.map(dayTpl => {
+    const steps = [];
+    dayTpl.slots.forEach(slot => {
+      if (excluded.includes(slot.role)) return;
+      const candidates = byRole[slot.role];
+      if (candidates && candidates.length > 0) {
+        steps.push({ p: candidates[0].name, w: slot.why });
+      }
+    });
+    return { day: dayTpl.day, time: dayTpl.time, steps };
+  }).filter(d => d.steps.length > 0);
+}
+
+// ─── RENDER ──────────────────────────────────────────────
+function render() {
+  renderStats();
+  renderSuggestions();
+  renderProducts();
+  renderRoutine();
+  renderTips();
+  syncSeasonSelect();
+}
+
+function renderStats() {
+  const all = allProducts();
+  document.getElementById('total-count').textContent = all.length;
+  document.getElementById('active-count').textContent = state.active.length;
+  document.getElementById('finished-count').textContent = state.finished.length;
+}
+
+function renderSuggestions() {
+  const area = document.getElementById('suggestions-area');
+  area.innerHTML = '';
+  if (!state.suggestions || state.suggestions.length === 0) return;
+  state.suggestions.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'suggestion';
+    div.innerHTML = `
+      <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>${s.msg}</span>
+    `;
+    area.appendChild(div);
+  });
+  // clear after 10s
+  setTimeout(() => { state.suggestions = []; saveState(); renderSuggestions(); }, 10000);
+}
+
+function renderProducts() {
+  const all = allProducts();
+  const list = document.getElementById('products-list');
+  list.innerHTML = '';
+
+  let pool = all;
+  if (activeFilter === 'active') pool = all.filter(p => isActive(p.id));
+  else if (activeFilter === 'opened') pool = all.filter(p => isOpened(p.id) && !isFinished(p.id));
+  else if (activeFilter === 'finished') pool = all.filter(p => isFinished(p.id));
+
+  const filtered = searchQuery
+    ? pool.filter(p => p.name.toLowerCase().includes(searchQuery) || (p.desc||'').toLowerCase().includes(searchQuery) || p.cat.toLowerCase().includes(searchQuery))
+    : pool;
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="no-results">Ничего не найдено</div>';
+    return;
+  }
+
+  if (searchQuery || activeFilter !== 'all') {
+    filtered.forEach(p => list.appendChild(makeCard(p)));
+  } else {
+    const cats = [...new Set(all.map(p => p.cat))];
+    cats.forEach(cat => {
+      const items = filtered.filter(p => p.cat === cat);
+      if (items.length === 0) return;
+      const label = document.createElement('div');
+      label.className = 'section-label';
+      label.textContent = cat;
+      list.appendChild(label);
+      items.forEach(p => list.appendChild(makeCard(p)));
+    });
+  }
+}
+
+function makeCard(p) {
+  const done = isFinished(p.id);
+  const active = isActive(p.id);
+  const opened = isOpened(p.id);
+  const card = document.createElement('div');
+  card.className = 'product-card' + (active ? ' is-active' : '') + (done ? ' is-finished' : '');
+  card.onclick = () => tapCard(p.id);
+  card.onpointerdown = () => onCardPointerDown(p.id);
+  card.onpointerup = onCardPointerUp;
+  card.onpointerleave = onCardPointerUp;
+  card.innerHTML = `
+    <div class="product-info">
+      <div class="product-name">${p.name}</div>
+      <div class="product-desc">${p.desc || ''}</div>
+      <div class="tags">
+        ${active ? '<span class="tag tag-active">В рутине</span>' : ''}
+        ${opened && !active ? '<span class="tag tag-opened">🔓 Открыто</span>' : ''}
+        ${p.mini ? '<span class="tag tag-mini">Миниатюра</span>' : ''}
+        ${done ? '<span class="tag tag-finished">Закончилось</span>' : ''}
+        ${p.skipReason && !done ? '<span class="tag tag-skip">Не в рутину</span>' : ''}
+      </div>
+    </div>
+    <div class="card-actions">
+      <button class="finish-btn ${done ? 'is-done' : ''}" onclick="toggleFinished(${p.id}, event)" aria-label="${done ? 'Вернуть' : 'Закончилось'}">
+        <svg viewBox="0 0 24 24">${done
+          ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+          : '<polyline points="20 6 9 17 4 12"/>'
+        }</svg>
+      </button>
+    </div>
+  `;
+  return card;
+}
+
+function renderRoutine() {
+  const list = document.getElementById('routine-list');
+  list.innerHTML = '';
+  const days = buildRoutine();
+  if (days.length === 0) {
+    list.innerHTML = '<div class="no-results">Нет активных средств для рутины</div>';
+    return;
+  }
+  days.forEach((day, i) => {
+    if (day.steps.length === 0) return;
+    const block = document.createElement('div');
+    block.className = 'day-block';
+    block.innerHTML = `
+      <div class="day-header" onclick="this.parentElement.classList.toggle('open')">
+        <span class="day-title">${day.day}</span>
+        <div class="day-right">
+          <span class="time-badge ${day.time === 'morning' ? 'badge-morning' : 'badge-evening'}">${day.time === 'morning' ? 'утро' : 'вечер'}</span>
+          <svg class="chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      </div>
+      <div class="day-steps">
+        ${day.steps.map((s, n) => `
+          <div class="step-row">
+            <div class="step-num">${n+1}</div>
+            <div>
+              <div class="step-product">${s.p}</div>
+              <div class="step-why">${s.w}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    list.appendChild(block);
+  });
+}
+
+// ─── SEARCH ──────────────────────────────────────────────
+function onSearch(val) {
+  searchQuery = val.toLowerCase().trim();
+  const btn = document.getElementById('search-clear');
+  if (btn) btn.style.display = searchQuery ? 'flex' : 'none';
+  renderProducts();
+}
+function clearSearch() {
+  const input = document.getElementById('search-input');
+  if (input) input.value = '';
+  onSearch('');
+}
+
+// ─── TABS ────────────────────────────────────────────────
+function showTab(tab) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  const idx = ['products','routine','tips'].indexOf(tab);
+  if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+}
+
+// ─── TOAST ───────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INIT ────────────────────────────────────────────────
+syncSeasonSelect();
+render();
+</script>
+</body>
+</html>
