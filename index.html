@@ -2,10 +2,12 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Skincare Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Barcode scanner -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -207,7 +209,7 @@ header{
 .day-block.open .chevron{transform:rotate(180deg)}
 .day-steps{border-top:1px solid var(--border);padding:8px 14px;display:none}
 .day-block.open .day-steps{display:block}
-.step-row{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.step-row{display:flex;gap:10px;padding:16px 0;border-bottom:1px solid var(--border);align-items:center}
 .step-row:last-child{border-bottom:none}
 .step-num{
   font-size:10px;font-weight:700;color:var(--accent);
@@ -519,6 +521,39 @@ header{
 <!-- Action menu -->
 <div class="action-menu" id="action-menu"></div>
 
+<!-- Product info modal -->
+<div class="modal-overlay" id="product-modal" onclick="closeProductModal(event)">
+  <div class="modal" id="product-modal-content" style="max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem">
+      <div style="flex:1">
+        <div id="pm-name" style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px"></div>
+        <div id="pm-cat" style="font-size:12px;color:var(--text-muted)"></div>
+      </div>
+      <button onclick="closeProductModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-hint)">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div id="pm-desc" style="font-size:13px;color:var(--text-muted);margin-bottom:1rem;line-height:1.5"></div>
+    <div id="pm-safety" style="display:none;margin-bottom:1rem"></div>
+    <div id="pm-ingredients-block" style="display:none;margin-bottom:1rem">
+      <div style="font-size:10px;font-weight:700;color:var(--text-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Состав</div>
+      <div id="pm-ingredients" style="font-size:11px;color:var(--text-muted);line-height:1.6;word-break:break-word"></div>
+    </div>
+    <div id="pm-warnings-block" style="display:none;margin-bottom:1rem">
+      <div style="font-size:10px;font-weight:700;color:var(--text-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Важные ингредиенты</div>
+      <div id="pm-warnings"></div>
+    </div>
+    <div id="pm-usage-block" style="display:none;margin-bottom:1rem">
+      <div style="font-size:10px;font-weight:700;color:var(--text-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Применение</div>
+      <div id="pm-usage-text" style="font-size:12px;color:var(--text-muted);line-height:1.6"></div>
+      <button id="pm-usage-load-btn" onclick="loadProductUsage()" style="margin-top:8px;background:var(--accent-light);border:1px solid var(--active-card-border);border-radius:var(--radius-sm);padding:6px 12px;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer;display:none">
+        🔍 Загрузить инструкцию
+      </button>
+    </div>
+    <div id="pm-skip" style="display:none"></div>
+  </div>
+</div>
+
 <!-- Add modal -->
 <div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
   <div class="modal">
@@ -526,7 +561,7 @@ header{
 
     <!-- Step 1: input -->
     <div id="add-step1">
-      <label class="modal-label">Напиши название или сфотографируй упаковку</label>
+      <label class="modal-label">Напиши название, сфотографируй или сканируй штрихкод</label>
       <div style="display:flex;gap:8px;margin-bottom:4px">
         <input class="modal-input" id="add-name" type="text" placeholder="Например: Laneige Water Sleeping Mask" style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter')analyzeProduct()"/>
         <button class="modal-btn primary" id="analyze-btn" onclick="analyzeProduct()" style="padding:9px 14px;white-space:nowrap;margin-bottom:0">Анализ</button>
@@ -541,6 +576,17 @@ header{
         Сфотографировать упаковку
       </label>
       <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="analyzeFromPhoto(this)"/>
+      <label class="camera-btn" style="margin-top:6px" onclick="openBarcodeScanner()">
+        <svg viewBox="0 0 24 24"><rect x="2" y="4" width="3" height="16"/><rect x="7" y="4" width="1" height="16"/><rect x="10" y="4" width="2" height="16"/><rect x="14" y="4" width="1" height="16"/><rect x="17" y="4" width="3" height="16"/></svg>
+        Сканировать штрихкод
+      </label>
+      <div id="barcode-scanner-wrap" style="display:none;margin-top:8px;position:relative;border-radius:var(--radius-sm);overflow:hidden;background:#000">
+        <video id="barcode-video" style="width:100%;max-height:180px;display:block" playsinline></video>
+        <div style="position:absolute;inset:0;border:2px solid var(--accent);border-radius:var(--radius-sm);pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,0.4) inset"></div>
+        <div style="position:absolute;top:50%;left:10%;right:10%;height:2px;background:var(--accent);transform:translateY(-50%);opacity:0.8"></div>
+        <button onclick="closeBarcodeScanner()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);border:none;border-radius:50%;width:28px;height:28px;color:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">✕</button>
+        <div id="barcode-status" style="position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:11px;color:#fff;opacity:0.8">Наведи камеру на штрихкод</div>
+      </div>
       <div id="camera-preview" style="display:none;margin-top:8px;border-radius:var(--radius-sm);overflow:hidden;max-height:120px">
         <img id="camera-img" style="width:100%;object-fit:cover;max-height:120px" alt="Фото упаковки"/>
       </div>
@@ -556,7 +602,9 @@ header{
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <span class="tag tag-mini" id="preview-cat"></span>
           <span class="tag tag-active" id="preview-role-tag" style="display:none"></span>
+          <span class="tag tag-mini" id="preview-mini-tag" style="display:none">Миниатюра</span>
         </div>
+        <div style="font-size:11px;margin-top:4px" id="preview-source"></div>
       </div>
       <div id="preview-tip" style="font-size:12px;color:var(--info);background:var(--info-light);border-radius:var(--radius-sm);padding:8px 10px;margin-bottom:12px;display:none"></div>
       <label class="modal-label">Добавить в рутину?</label>
@@ -603,11 +651,11 @@ const PRODUCTS = [
   {id:15, name:"S.Nature Aqua Soy Yogurt Eye Cream", desc:"Увлажнение зоны глаз, аденозин, squalane", cat:"Глаза", role:"eye_cream", replacedBy:[14]},
   {id:16, name:"Fation NOSCA9 Pore Enhancing Serum", desc:"Поры, нано-ретинол на Т-зону, ниацинамид", cat:"Сыворотка", role:"serum_active", replacedBy:[]},
   {id:17, name:"Yakong Panthenol Ampoule", desc:"Глубокое увлажнение, успокоение барьера", cat:"Ампула", role:"ampoule", replacedBy:[]},
-  {id:18, name:"Centellian24 PDRN Cream", desc:"Лифтинг, TECA-PDRN — проводник под гаджет Medicube", cat:"Крем", role:"pdrn", replacedBy:[]},
+  {id:18, name:"Centellian24 PDRN Cream", desc:"Лифтинг, TECA-PDRN — проводник под гаджет Medicube", cat:"Крем", role:"pdrn", replacedBy:[], skipReason:"Это средство максимально эффективно с гаджетом Medicube AGE-R. Добавь гаджет в рутину — тогда Centellian24 будет иметь смысл."},
   {id:19, name:"MERBELLE детокс-маска", desc:"Глубокое очищение, обновление — суббота", cat:"Маска", role:"mask_cleanse", replacedBy:[23,24]},
 
   {id:21, name:"ISOI Blemish Care Eye & Wrinkle патчи", desc:"Ниацинамид, носогубки и зона глаз — суббота", cat:"Патчи", role:"patches", replacedBy:[]},
-  {id:22, name:"Dr.Reju-All PDRN маска (4шт)", desc:"PDRN-интенсив для упругости и сияния", cat:"Маска", role:"mask_pdrn", replacedBy:[]},
+  {id:22, name:"Dr.Reju-All PDRN маска (4шт)", desc:"PDRN-интенсив для упругости и сияния", cat:"Маска", role:"mask_pdrn", replacedBy:[], skipReason:"PDRN маска лучше работает в связке с гаджетом Medicube. Добавь устройство в рутину для максимального эффекта."},
   {id:23, name:"PAYOT Masque D'Tox éclat", desc:"Детокс, замена MERBELLE по функции", cat:"Маска", role:"mask_cleanse", replacedBy:[24], mini:true},
   {id:24, name:"PAYOT MY PAYOT Masque nettoyant", desc:"Очищающая маска для сияния", cat:"Маска", role:"mask_cleanse", replacedBy:[23], mini:true},
   {id:25, name:"PAYOT Source Masque baume", desc:"Увлажняющая маска-бальзам — воскресенье", cat:"Маска", role:"mask_hydro", replacedBy:[], mini:true},
@@ -792,7 +840,7 @@ const SEASON_NOTES = {
 const SEASON_EXCLUDE = {
   summer: ['night_cream','retinol'],
   winter: [],
-  vacation: ['acid','retinol','vitamin_c','enzyme'],
+  vacation: ['acid','retinol','vitamin_c','enzyme','night_cream'],
 };
 
 // Season-specific step additions (roles to prioritize)
@@ -888,6 +936,12 @@ function tapCard(id) {
   const product = allProducts().find(p => p.id === id);
   if (!product) return;
 
+  // Dynamic skip for device-dependent products
+  if (DEVICE_DEPENDENT_ROLES.includes(product.role) && !deviceIsActive()) {
+    showToast('Добавь Medicube AGE-R в рутину — тогда это средство будет максимально эффективным');
+    return;
+  }
+
   if (product.skipReason) {
     showToast(product.skipReason);
     return;
@@ -930,6 +984,9 @@ function resetAddModal() {
   document.getElementById('camera-preview').style.display = 'none';
   const camInput = document.getElementById('camera-input');
   if (camInput) camInput.value = '';
+  closeBarcodeScanner();
+  window._pendingIngredients = null;
+  window._pendingAnalysis = null;
   pendingProduct = null;
 }
 
@@ -957,9 +1014,9 @@ async function analyzeFromPhoto(input) {
       r.readAsDataURL(file);
     });
 
-    // Call Google Vision API for text detection
+    // Use Google Cloud Vision API for OCR
     const visionRes = await fetch(
-      `https://vision.googleapis.com/v1/images:annotate?key=AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg`,
+      'https://vision.googleapis.com/v1/images:annotate?key=AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -968,40 +1025,45 @@ async function analyzeFromPhoto(input) {
             image: { content: base64 },
             features: [
               { type: 'TEXT_DETECTION', maxResults: 1 },
-              { type: 'LOGO_DETECTION', maxResults: 3 },
+              { type: 'LOGO_DETECTION', maxResults: 5 },
             ]
           }]
         })
       }
     );
 
+    if (!visionRes.ok) throw new Error('Vision API error: ' + visionRes.status);
     const visionData = await visionRes.json();
+
+    if (visionData.error) throw new Error(visionData.error.message);
+
     const annotations = visionData.responses?.[0];
+    if (!annotations) throw new Error('Нет ответа от API');
 
-    // Extract text
-    const fullText = annotations?.fullTextAnnotation?.text || annotations?.textAnnotations?.[0]?.description || '';
-    const logos = annotations?.logoAnnotations?.map(l => l.description).join(' ') || '';
+    const fullText = annotations?.fullTextAnnotation?.text
+      || annotations?.textAnnotations?.[0]?.description
+      || '';
+    const logos = (annotations?.logoAnnotations || []).map(l => l.description).join(' ');
 
-    // Parse product name from text — look for brand + product pattern
-    const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 2 && l.length < 60);
-    const logos_text = logos ? logos + ' ' : '';
+    const lines = fullText.split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 1 && l.length < 60 && /[a-zA-Zа-яА-ЯёЁ]/.test(l));
 
-    // Heuristic: first few meaningful lines likely contain brand + product name
-    const candidateName = logos_text + lines.slice(0, 4).join(' ');
-    const cleanName = candidateName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\+%]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
+    const combined = (logos ? logos + ' ' : '') + lines.slice(0, 5).join(' ');
+    const cleanName = combined.replace(/[^\w\sа-яА-ЯёЁ\-\+%]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
 
-    if (cleanName.length > 3) {
+    if (cleanName.length > 2) {
       document.getElementById('add-name').value = cleanName;
       document.getElementById('add-loading').style.display = 'none';
       showToast('Текст распознан — нажми Анализ');
     } else {
-      throw new Error('Текст не распознан');
+      throw new Error('Текст не распознан — попробуй сфотографировать чётче');
     }
 
   } catch(e) {
     document.getElementById('add-loading').style.display = 'none';
     const err = document.getElementById('add-error');
-    err.textContent = 'Не удалось распознать текст. Попробуй сфотографировать чётче или введи название вручную.';
+    err.textContent = e.message || 'Не удалось распознать текст. Сфотографируй чётче или введи название вручную.';
     err.style.display = 'block';
   }
 }
@@ -1095,6 +1157,8 @@ async function analyzeProduct() {
     if (cleanSnippet.length > 20) finalDesc = cleanSnippet;
   }
 
+  const isMini = detectMini(name);
+
   pendingProduct = {
     name: name,
     desc: finalDesc,
@@ -1102,6 +1166,7 @@ async function analyzeProduct() {
     role: result.role || 'custom',
     tip: result.tip || '',
     googleFound: !!googleSnippet,
+    mini: isMini,
   };
 
   document.getElementById('preview-name').textContent = pendingProduct.name;
@@ -1112,6 +1177,11 @@ async function analyzeProduct() {
   if (sourceEl) {
     sourceEl.textContent = pendingProduct.googleFound ? '🔍 Найдено в Google' : '🔤 Анализ по ключевым словам';
     sourceEl.style.color = pendingProduct.googleFound ? 'var(--success)' : 'var(--text-hint)';
+  }
+
+  const miniTag = document.getElementById('preview-mini-tag');
+  if (miniTag) {
+    miniTag.style.display = pendingProduct.mini ? 'inline-block' : 'none';
   }
 
   const roleTag = document.getElementById('preview-role-tag');
@@ -1140,15 +1210,32 @@ function saveNewProduct() {
   if (!pendingProduct) return;
   const active = document.querySelector('input[name="add-active"]:checked').value === '1';
   const id = Date.now();
+
+  // Use ingredient analysis to improve role detection
+  let role = pendingProduct.role || 'custom';
+  let ingredientWarnings = [];
+  if (window._pendingAnalysis) {
+    const analysis = window._pendingAnalysis;
+    if (analysis.roles.length > 0 && role === 'custom') {
+      role = analysis.roles[0];
+    }
+    ingredientWarnings = analysis.warnings.concat(analysis.flags);
+    window._pendingAnalysis = null;
+  }
+  window._pendingIngredients = null;
+
   const newP = {
     id,
     name: pendingProduct.name,
     desc: pendingProduct.desc,
     cat: pendingProduct.cat,
-    role: pendingProduct.role,
+    role,
     replacedBy: [],
     mini: false,
     custom: true,
+    ingredientWarnings: ingredientWarnings.length > 0 ? ingredientWarnings : undefined,
+    safety: window._pendingAnalysis?.safety || undefined,
+    ingredients: window._pendingIngredients || undefined,
   };
   state.custom.push(newP);
   if (active) state.active.push(id);
@@ -1156,7 +1243,14 @@ function saveNewProduct() {
   document.getElementById('add-modal').classList.remove('open');
   resetAddModal();
   render();
-  showToast(`«${newP.name}» добавлено`);
+
+  // Show ingredient warnings if any
+  if (ingredientWarnings.length > 0) {
+    const warnText = ingredientWarnings.slice(0,2).map(w => w.warn).join(' • ');
+    setTimeout(() => showToast('⚠ ' + warnText.substring(0, 100)), 500);
+  } else {
+    showToast(`«${newP.name}» добавлено`);
+  }
 }
 
 // ─── TIPS ENGINE ─────────────────────────────────────────
@@ -1190,12 +1284,14 @@ function rolesOnSameDay(roleA, roleB) {
 }
 
 function renderCompatWarningsInline(container) {
-  const active = allProducts().filter(p => isActive(p.id));
+  const season = state.season || null;
+  const excluded = season ? (SEASON_EXCLUDE[season] || []) : [];
+  // Only check active products not excluded by season
+  const active = allProducts().filter(p => isActive(p.id) && !excluded.includes(p.role));
   const warnings = [];
   for (let i = 0; i < active.length; i++) {
     for (let j = i+1; j < active.length; j++) {
       const pA = active[i], pB = active[j];
-      // Only warn if both are scheduled on the same day
       if (!rolesOnSameDay(pA.role, pB.role)) continue;
       for (const rule of COMPAT_RULES) {
         if (rule.result !== 'ok' && rule.roles.includes(pA.role) && rule.roles.includes(pB.role)) {
@@ -1312,12 +1408,55 @@ function buildSeasonRemoveRules() {
       reason: 'Ретинол + активное солнце = риск ожогов и стойкой пигментации.',
       advice: 'Убери ретинол на весь период отпуска.',
     });
+    rules.push({
+      role: 'night_cream',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'night_cream').length > 0,
+      title: '✈️ Отпуск: ночной крем лишний',
+      reason: 'В отпуске жарко — плотный ночной крем перегружает кожу. Замени на лёгкую ампулу или сыворотку.',
+      advice: 'Убери BY WISHTREND Bakuchiol на время поездки.',
+    });
+    rules.push({
+      role: 'vitamin_c',
+      condition: () => allProducts().filter(p => isActive(p.id) && p.role === 'vitamin_c').length > 0,
+      title: '✈️ Отпуск: витамин С убираем',
+      reason: 'Витамин С повышает чувствительность к солнцу. В отпуске риск выше.',
+      advice: 'Убери витамин С на время отпуска.',
+    });
   }
 
   return rules;
 }
 
 // Products not in routine but should be recommended
+// Detect if product is a miniature based on name/volume
+function detectMini(name) {
+  const n = name.toLowerCase();
+  // Volume patterns: 5ml, 10ml, 15ml, 20ml, 25ml considered mini
+  const volMatch = n.match(/(\d+)\s*ml/);
+  if (volMatch) {
+    const vol = parseInt(volMatch[1]);
+    // Typical mini thresholds by category hints
+    if (vol <= 30) return true;
+  }
+  // Keyword detection
+  const miniKeywords = [
+    'миниатюр', 'mini', 'travel', 'sample', 'пробник',
+    'travel size', 'trial', 'мини', 'набор', 'set',
+    '10мл','15мл','20мл','25мл','30мл',
+    '10ml','15ml','20ml','25ml','30ml',
+    'ampoule','ампул', // ampoules are typically small
+  ];
+  return miniKeywords.some(k => n.includes(k));
+}
+
+// Check if Medicube gadget is active in routine
+function deviceIsActive() {
+  return allProducts().some(p => p.role === 'device' && isActive(p.id));
+}
+
+// Roles that require the gadget to be meaningful
+const DEVICE_DEPENDENT_ROLES = ['pdrn', 'mask_pdrn'];
+
 const ADD_RULES = [
   {
     role: 'sunscreen',
@@ -1396,9 +1535,13 @@ function buildAddAdvice() {
   ADD_RULES.forEach(rule => {
     if (excluded.includes(rule.role)) return;
     if (rule.condition()) {
-      // find candidates from arsenal
       const candidates = allProducts().filter(p =>
-        p.role === rule.role && !isFinished(p.id) && !isActive(p.id)
+        p.role === rule.role &&
+        !isFinished(p.id) &&
+        !isActive(p.id) &&
+        !excluded.includes(p.role) &&
+        // Don't suggest device-dependent products if gadget not in routine
+        !(DEVICE_DEPENDENT_ROLES.includes(p.role) && !deviceIsActive())
       );
       advice.push({ ...rule, candidates });
     }
@@ -1418,18 +1561,24 @@ function renderRemoveAdvice(container) {
   items.forEach(item => {
     const card = document.createElement('div');
     card.className = 'tip-card';
+
+    // Build advice text with actual product names
+    const productNames = item.targets.map(p => p.name).join(', ');
+    const adviceText = item.advice.replace('BY WISHTREND Bakuchiol', productNames);
+
     const targetsHtml = item.targets.map(p => `
       <button class="tip-product-btn" style="background:var(--danger-light);border-color:rgba(239,68,68,0.2);color:var(--danger)" onclick="removeFromTip(${p.id})">
         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         Убрать: ${p.name}
       </button>`).join('');
+
     card.innerHTML = `
       <div class="tip-header">
         <div class="tip-icon warn"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
         <div><div class="tip-day">⚠ Лишнее в рутине</div><div class="tip-title">${item.title}</div></div>
       </div>
       <div class="tip-body">${item.reason}</div>
-      <div style="font-size:12px;color:var(--accent);background:var(--accent-light);border-radius:6px;padding:7px 10px;margin-bottom:8px">💡 ${item.advice}</div>
+      <div style="font-size:12px;color:var(--accent);background:var(--accent-light);border-radius:6px;padding:7px 10px;margin-bottom:8px">💡 ${adviceText}</div>
       <div class="tip-suggestions">${targetsHtml}</div>
     `;
     container.appendChild(card);
@@ -1449,23 +1598,39 @@ function renderAddAdvice(container) {
     card.className = 'tip-card';
     const dayCtx = ROLE_DAY[item.role] || { day: 'по рутине', time: '', step: 0 };
 
-    const candidatesHtml = item.candidates.length > 0
-      ? item.candidates.slice(0, 3).map(c => {
+    // Sort: opened first, then mini, then rest
+    const openedOnes = item.candidates.filter(c => isOpened(c.id));
+    const miniOnes = item.candidates.filter(c => !isOpened(c.id) && c.mini);
+    const restOnes = item.candidates.filter(c => !isOpened(c.id) && !c.mini);
+    const sorted = [...openedOnes, ...miniOnes, ...restOnes].slice(0, 4);
+
+    const candidatesHtml = sorted.length > 0
+      ? sorted.map((c, idx) => {
           const opened = isOpened(c.id);
-          const openedBadge = opened ? ' <span style="font-size:10px;opacity:0.7">🔓 уже открыто</span>' : '';
-          const whereText = `Шаг ${dayCtx.step}, ${dayCtx.day}, ${dayCtx.time}`;
+          const isMini = c.mini;
+          const badge = opened
+            ? `<span style="font-size:10px;font-weight:600;color:var(--warn);background:rgba(245,158,11,0.12);padding:1px 6px;border-radius:4px;flex-shrink:0">🔓 открыто</span>`
+            : isMini
+            ? `<span style="font-size:10px;color:var(--text-hint);background:var(--surface3);padding:1px 6px;border-radius:4px;flex-shrink:0">мини</span>`
+            : '';
+          const rowBg = opened
+            ? 'background:rgba(245,158,11,0.04);border-radius:6px;'
+            : '';
           return `
-            <div style="border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:4px">
-              <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px">${c.name}${openedBadge}</div>
-              <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">${c.desc}</div>
-              <div style="font-size:10px;color:var(--accent);margin-bottom:6px">📍 ${whereText}</div>
-              <button class="tip-product-btn" onclick="addFromTip(${c.id})">
+            <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);${rowBg}">
+              <div style="font-size:11px;font-weight:600;color:var(--text-hint);min-width:14px;text-align:center">${idx + 1}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-top:1px">${c.desc}</div>
+              </div>
+              ${badge}
+              <button class="tip-product-btn" style="padding:4px 10px;flex-shrink:0" onclick="addFromTip(${c.id})">
                 <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Добавить в рутину
+                Добавить
               </button>
             </div>`;
         }).join('')
-      : `<div style="font-size:12px;color:var(--text-hint);padding:4px 0">Подходящего средства нет в арсенале — нужно купить</div>`;
+      : `<div style="font-size:12px;color:var(--text-hint);padding:6px 0">Подходящего средства нет в арсенале — нужно купить</div>`;
 
     card.innerHTML = `
       <div class="tip-header">
@@ -1478,11 +1643,11 @@ function renderAddAdvice(container) {
         </div>
         <div>
           <div class="tip-day">${item.critical ? '⚡ критично' : '💡 рекомендация'}</div>
-          <div class="tip-title">${item.title}</div>
+          <div class="tip-title">Не хватает: ${item.title.replace('Нет ','').replace('Нет ','')}</div>
         </div>
       </div>
       <div class="tip-body">${item.reason}</div>
-      <div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">📍 Куда: шаг ${dayCtx.step} — ${dayCtx.day}, ${dayCtx.time}</div>
+      <div style="font-size:10px;color:var(--accent);margin-bottom:6px">📍 Шаг ${dayCtx.step} — ${dayCtx.day}, ${dayCtx.time}</div>
       ${candidatesHtml}
     `;
     container.appendChild(card);
@@ -1495,6 +1660,42 @@ function removeFromTip(id) {
   render();
   const p = allProducts().find(x => x.id === id);
   showToast(`«${p ? p.name : 'Средство'}» убрано из рутины`);
+}
+
+function renderIngredientWarnings(container) {
+  const warned = allProducts().filter(p =>
+    isActive(p.id) && p.ingredientWarnings && p.ingredientWarnings.length > 0
+  );
+  if (warned.length === 0) return;
+
+  const label = document.createElement('div');
+  label.className = 'section-label';
+  label.style.marginTop = '0';
+  label.textContent = '🧪 Анализ состава';
+  container.appendChild(label);
+
+  warned.forEach(p => {
+    const irritants = p.ingredientWarnings.filter(w => w.flag === 'irritant');
+    const activeWarns = p.ingredientWarnings.filter(w => !w.flag);
+    if (irritants.length === 0 && activeWarns.length === 0) return;
+
+    const card = document.createElement('div');
+    card.className = 'tip-card';
+    const warnItems = [...activeWarns, ...irritants].slice(0, 3).map(w =>
+      `<div style="font-size:11px;padding:4px 0;border-bottom:1px solid var(--border);color:var(--text-muted)">
+        <span style="font-weight:600;color:var(--text)">${w.ingredient}</span> — ${w.warn}
+      </div>`
+    ).join('');
+
+    card.innerHTML = `
+      <div class="tip-header">
+        <div class="tip-icon info"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></div>
+        <div><div class="tip-day">🧪 состав</div><div class="tip-title">${p.name}</div></div>
+      </div>
+      <div style="margin-top:6px">${warnItems}</div>
+    `;
+    container.appendChild(card);
+  });
 }
 
 function renderTips() {
@@ -1513,7 +1714,11 @@ function renderTips() {
   // 1. Vacation mini advice
   const season = state.season || null;
   if (season === 'vacation') {
-    const nonMiniActive = allProducts().filter(p => isActive(p.id) && !p.mini && p.cat !== 'Гаджет');
+    const vacExcluded = SEASON_EXCLUDE['vacation'] || [];
+    // Only show truly packable items — exclude retinol/acids/night creams (already in remove advice)
+    const nonMiniActive = allProducts().filter(p =>
+      isActive(p.id) && !p.mini && p.cat !== 'Гаджет' && !vacExcluded.includes(p.role)
+    );
     if (nonMiniActive.length > 0) {
       const div = document.createElement('div');
       div.className = 'tip-card';
@@ -1535,6 +1740,9 @@ function renderTips() {
       list.appendChild(div);
     }
   }
+
+  // 1b. Ingredient warnings for custom products
+  renderIngredientWarnings(list);
 
   // 2. Remove advice
   renderRemoveAdvice(list);
@@ -1589,7 +1797,8 @@ function renderOpenedTips(container) {
   const opened = (state.opened || [])
     .map(id => allProducts().find(p => p.id === id))
     .filter(p => p && !isFinished(p.id) && !isActive(p.id))
-    .filter(p => !excluded.includes(p.role)); // skip season-excluded roles
+    .filter(p => !excluded.includes(p.role)) // skip season-excluded roles
+    .filter(p => !(DEVICE_DEPENDENT_ROLES.includes(p.role) && !deviceIsActive())); // skip device-dependent if no gadget
   if (opened.length === 0) return;
 
   const label = document.createElement('div');
@@ -1735,6 +1944,10 @@ function makeCard(p) {
 
   const card = document.createElement('div');
   card.className = 'product-card' + (active ? ' is-active' : '') + (done ? ' is-finished' : '');
+  const safetyBadge = p.safety
+    ? `<span class="tag" style="background:none;color:${getSafetyColor(p.safety.level)};padding-left:0">${p.safety.emoji} ${p.safety.score}/10</span>`
+    : '';
+
   card.innerHTML = `
     <div class="product-info">
       <div class="product-name">${p.name}</div>
@@ -1745,9 +1958,13 @@ function makeCard(p) {
         ${p.mini ? '<span class="tag tag-mini">Миниатюра</span>' : ''}
         ${done ? '<span class="tag tag-finished">Закончилось</span>' : ''}
         ${p.skipReason && !done ? '<span class="tag tag-skip">Не в рутину</span>' : ''}
+        ${safetyBadge}
       </div>
     </div>
     <div class="card-actions">
+      <button class="step-info-btn" style="margin-bottom:4px" onclick="openProductModal(event,${p.id})" aria-label="Информация">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      </button>
       <button class="action-dots" onclick="openActionMenu(event,${p.id})" aria-label="Действия">
         <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
       </button>
@@ -1830,17 +2047,169 @@ function openActionMenu(e, id) {
     </button>
   `;
 
-  // Position near the button
+  // Position near the button — use fixed positioning relative to viewport
   const rect = e.currentTarget.getBoundingClientRect();
-  menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
-  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  const menuWidth = 190;
+  let top = rect.bottom + 4;
+  let right = window.innerWidth - rect.right;
+
+  // Keep within viewport
+  if (top + 160 > window.innerHeight) top = rect.top - 164;
+  if (right < 8) right = 8;
+
+  menu.style.position = 'fixed';
+  menu.style.top = top + 'px';
+  menu.style.right = right + 'px';
   menu.style.left = 'auto';
+  menu.style.zIndex = '300'; // above everything
   menu.classList.add('open');
 }
 
 function closeActionMenu() {
   document.getElementById('action-menu')?.classList.remove('open');
   _actionMenuTarget = null;
+}
+
+// ─── PRODUCT INFO MODAL ──────────────────────────────────
+function openProductModal(e, id) {
+  e && e.stopPropagation();
+  const p = allProducts().find(x => x.id === id);
+  if (!p) return;
+
+  document.getElementById('pm-name').textContent = p.name;
+  document.getElementById('pm-cat').textContent = p.cat + (p.mini ? ' · Миниатюра' : '');
+  document.getElementById('pm-desc').textContent = p.desc || '';
+
+  // Safety rating
+  const safetyEl = document.getElementById('pm-safety');
+  if (p.safety) {
+    const color = getSafetyColor(p.safety.level);
+    safetyEl.style.display = 'block';
+    safetyEl.innerHTML = `
+      <div style="font-size:10px;font-weight:700;color:var(--text-hint);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px">Рейтинг безопасности</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:32px;font-weight:700;color:${color}">${p.safety.score}</div>
+        <div style="flex:1">
+          <div style="height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:4px">
+            <div style="height:100%;width:${p.safety.score * 10}%;background:${color};border-radius:3px;transition:width 0.4s"></div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted)">${p.safety.emoji} из 10</div>
+        </div>
+      </div>
+      ${p.safety.goodFound.length > 0 ? `<div style="font-size:11px;color:var(--success);margin-top:6px">✓ ${p.safety.goodFound.slice(0,4).join(', ')}</div>` : ''}
+      ${p.safety.badFound.length > 0 ? `<div style="font-size:11px;color:var(--danger);margin-top:4px">✕ ${p.safety.badFound.slice(0,3).join(', ')}</div>` : ''}
+    `;
+  } else {
+    safetyEl.style.display = 'none';
+  }
+
+  // Ingredients
+  const ingBlock = document.getElementById('pm-ingredients-block');
+  if (p.ingredients) {
+    ingBlock.style.display = 'block';
+    document.getElementById('pm-ingredients').textContent = p.ingredients;
+  } else {
+    ingBlock.style.display = 'none';
+  }
+
+  // Warnings
+  const warnBlock = document.getElementById('pm-warnings-block');
+  if (p.ingredientWarnings && p.ingredientWarnings.length > 0) {
+    warnBlock.style.display = 'block';
+    document.getElementById('pm-warnings').innerHTML = p.ingredientWarnings.map(w => `
+      <div style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+        <span style="font-weight:600;color:var(--text)">${w.ingredient}</span>
+        <span style="color:${w.flag ? 'var(--warn)' : 'var(--accent)'}"> · ${w.category || ''}</span>
+        <div style="color:var(--text-muted);margin-top:2px;font-size:11px">${w.warn}</div>
+      </div>
+    `).join('');
+  } else {
+    warnBlock.style.display = 'none';
+  }
+
+  // Skip reason
+  const skipEl = document.getElementById('pm-skip');
+  if (p.skipReason) {
+    skipEl.style.display = 'block';
+    skipEl.innerHTML = `<div style="font-size:12px;color:var(--warn);background:var(--warn-light);border-radius:var(--radius-sm);padding:8px 10px">${p.skipReason}</div>`;
+  } else {
+    skipEl.style.display = 'none';
+  }
+
+  // Usage instructions
+  window._currentProductForUsage = p.name;
+  const usageBlock = document.getElementById('pm-usage-block');
+  const usageText = document.getElementById('pm-usage-text');
+  const usageBtn = document.getElementById('pm-usage-load-btn');
+  usageBlock.style.display = 'block';
+
+  if (_usageCache[p.name]) {
+    // Already cached from routine tooltip
+    usageText.innerHTML = _usageCache[p.name];
+    usageText.style.display = 'block';
+    usageBtn.style.display = 'none';
+  } else {
+    usageText.innerHTML = '<span style="color:var(--text-hint);font-size:12px">Инструкция не загружена</span>';
+    usageBtn.style.display = 'inline-flex';
+    usageBtn.textContent = '🔍 Загрузить инструкцию';
+    usageBtn.disabled = false;
+  }
+
+  document.getElementById('product-modal').classList.add('open');
+}
+
+async function loadProductUsage() {
+  const name = window._currentProductForUsage;
+  if (!name) return;
+
+  const btn = document.getElementById('pm-usage-load-btn');
+  const usageText = document.getElementById('pm-usage-text');
+
+  btn.textContent = 'Загружаю...';
+  btn.disabled = true;
+
+  try {
+    const GOOGLE_API_KEY = 'AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg';
+    const SEARCH_ENGINE_ID = '43db62a9e66ba4e80';
+    const query = encodeURIComponent(name + ' как наносить применение инструкция');
+    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}&num=3&lr=lang_ru`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    let usageContent = '';
+    if (data.items && data.items.length > 0) {
+      const snippets = data.items
+        .slice(0, 3)
+        .map(item => item.snippet || '')
+        .join(' ')
+        .replace(/\.\.\./g, ' ')
+        .trim();
+
+      const appKeywords = ['нанести','нанесите','нанос','применени','смыть','смойте',
+        'держать','слой','втирать','втирайте','помассируй','протрите','тонким','массажными'];
+      const hasInstructions = appKeywords.some(k => snippets.toLowerCase().includes(k));
+
+      if (hasInstructions && snippets.length > 30) {
+        usageContent = `<div style="margin-top:4px;font-size:12px;color:var(--text-muted);line-height:1.6">${snippets.substring(0, 350)}</div>`;
+      }
+    }
+
+    const html = usageContent || '<span style="color:var(--text-hint);font-size:12px">Инструкция не найдена — попробуй поискать «' + name + ' как применять»</span>';
+    _usageCache[name] = html;
+    usageText.innerHTML = html;
+    btn.style.display = 'none';
+
+  } catch(e) {
+    usageText.innerHTML = '<span style="color:var(--danger);font-size:12px">Ошибка загрузки</span>';
+    btn.textContent = '🔍 Попробовать снова';
+    btn.disabled = false;
+  }
+}
+
+function closeProductModal(e) {
+  if (!e || e.target === document.getElementById('product-modal')) {
+    document.getElementById('product-modal')?.classList.remove('open');
+  }
 }
 
 function actionToggleRoutine(id) {
@@ -1890,15 +2259,9 @@ function renderRoutine() {
             <div style="flex:1">
               <div style="display:flex;align-items:center;gap:4px">
                 <div class="step-product">${s.p}</div>
-                <button class="step-info-btn" onclick="toggleTooltip(this, ${JSON.stringify(s.p)})" aria-label="Подсказка" data-product="${s.p.replace(/"/g,'&quot;')}">
+                <button class="step-info-btn" onclick="openProductModalByName(event,'${s.p.replace(/'/g,'').replace(/"/g,'')}','${s.w.replace(/'/g,'').replace(/"/g,'')}')" aria-label="Подсказка">
                   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 </button>
-              </div>
-              <div class="step-tooltip">
-                <div class="tooltip-why">${s.w}</div>
-                <div class="tooltip-usage" style="display:none">
-                  <div class="tooltip-usage-loading" style="color:var(--text-hint);font-size:11px;padding:4px 0">Загружаю инструкцию...</div>
-                </div>
               </div>
             </div>
           </div>
@@ -1911,76 +2274,41 @@ function renderRoutine() {
 
 const _usageCache = {};
 
-async function toggleTooltip(btn, productName) {
-  const tooltip = btn.closest('.step-row').querySelector('.step-tooltip');
-  if (!tooltip) return;
-
-  const isVisible = tooltip.classList.contains('visible');
-  tooltip.classList.toggle('visible', !isVisible);
-  btn.style.borderColor = !isVisible ? 'var(--accent)' : '';
-  btn.style.background = !isVisible ? 'var(--accent-light)' : '';
-  btn.querySelector('svg').style.stroke = !isVisible ? 'var(--accent)' : '';
-
-  if (!isVisible && productName) {
-    const usageEl = tooltip.querySelector('.tooltip-usage');
-    const loadingEl = tooltip.querySelector('.tooltip-usage-loading');
-    if (!usageEl) return;
-
-    // Already loaded
-    if (_usageCache[productName]) {
-      usageEl.style.display = 'block';
-      usageEl.innerHTML = _usageCache[productName];
-      return;
-    }
-
-    // Show loading
-    usageEl.style.display = 'block';
-    loadingEl && (loadingEl.style.display = 'block');
-
-    try {
-      const GOOGLE_API_KEY = 'AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg';
-      const SEARCH_ENGINE_ID = '43db62a9e66ba4e80';
-      const query = encodeURIComponent(productName + ' как наносить применение инструкция');
-      const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}&num=3&lr=lang_ru`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      let usageText = '';
-      if (data.items && data.items.length > 0) {
-        // Extract snippet with application instructions
-        const snippets = data.items
-          .slice(0, 3)
-          .map(item => item.snippet || '')
-          .join(' ')
-          .replace(/\.\.\./g, ' ')
-          .trim();
-
-        // Try to find application steps in snippets
-        const appKeywords = ['нанести', 'нанесите', 'нанос', 'применени', 'смыть', 'смойте', 'держать', 'слой', 'втирать', 'втирайте', 'помассируй', 'протрите', 'тонким', 'массажными'];
-        const hasInstructions = appKeywords.some(k => snippets.toLowerCase().includes(k));
-
-        if (hasInstructions && snippets.length > 30) {
-          usageText = snippets.substring(0, 280);
-        }
-      }
-
-      // Format result
-      const html = usageText
-        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
-             <div style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Применение</div>
-             <div style="font-size:11px;color:var(--text-muted);line-height:1.6">${usageText}</div>
-           </div>`
-        : `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-hint)">
-             Инструкция не найдена — попробуй поискать «${productName} как применять» в интернете
-           </div>`;
-
-      _usageCache[productName] = html;
-      usageEl.innerHTML = html;
-
-    } catch(e) {
-      if (usageEl) usageEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);margin-top:4px">Не удалось загрузить инструкцию</div>';
-    }
+// Opens product modal by name (for routine tab where we don't have id)
+function openProductModalByName(e, name, why) {
+  e && e.stopPropagation();
+  // Try to find product in arsenal by name
+  const p = allProducts().find(x => x.name === name || x.name.includes(name));
+  if (p) {
+    openProductModal(e, p.id);
+    return;
   }
+  // Product not in arsenal — show simple modal with name + why + usage load
+  window._currentProductForUsage = name;
+  document.getElementById('pm-name').textContent = name;
+  document.getElementById('pm-cat').textContent = 'Из рутины';
+  document.getElementById('pm-desc').textContent = why || '';
+  document.getElementById('pm-safety').style.display = 'none';
+  document.getElementById('pm-ingredients-block').style.display = 'none';
+  document.getElementById('pm-warnings-block').style.display = 'none';
+  document.getElementById('pm-skip').style.display = 'none';
+
+  const usageBlock = document.getElementById('pm-usage-block');
+  const usageText = document.getElementById('pm-usage-text');
+  const usageBtn = document.getElementById('pm-usage-load-btn');
+  usageBlock.style.display = 'block';
+
+  if (_usageCache[name]) {
+    usageText.innerHTML = _usageCache[name];
+    usageBtn.style.display = 'none';
+  } else {
+    usageText.innerHTML = '<span style="color:var(--text-hint);font-size:12px">Нажми кнопку чтобы загрузить инструкцию</span>';
+    usageBtn.style.display = 'inline-flex';
+    usageBtn.textContent = '🔍 Загрузить инструкцию';
+    usageBtn.disabled = false;
+  }
+
+  document.getElementById('product-modal').classList.add('open');
 }
 
 // ─── SEARCH ──────────────────────────────────────────────
@@ -2013,6 +2341,203 @@ function showToast(msg) {
   t.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INGREDIENT DATABASE ─────────────────────────────────
+// Internal use only — for smart advice and role detection
+const INGREDIENT_DB = {
+  // Retinoids
+  retinol: { role:'retinol', warn:'Не совмещай с кислотами в один вечер. Только вечером, строго SPF утром.', category:'retinoid' },
+  retinal: { role:'retinol', warn:'Более сильный, чем ретинол. Вводи постепенно.', category:'retinoid' },
+  bakuchiol: { role:'retinol', warn:'Мягкий аналог ретинола. Можно утром и вечером.', category:'retinoid' },
+  'retinyl palmitate': { role:'retinol', warn:'Мягкая форма ретинола.', category:'retinoid' },
+
+  // Acids
+  'lactic acid': { role:'acid', warn:'Кислота — не совмещай с ретинолом. SPF обязателен.', category:'aha' },
+  'glycolic acid': { role:'acid', warn:'Сильная AHA — начинай с низкой концентрации.', category:'aha' },
+  'mandelic acid': { role:'acid', warn:'Мягкая AHA, хорошо для чувствительной кожи.', category:'aha' },
+  'salicylic acid': { role:'acid', warn:'BHA — хороша для пор. Не совмещай с другими кислотами.', category:'bha' },
+  'lha': { role:'acid', warn:'Мягкая BHA, производная салициловой кислоты.', category:'bha' },
+  'azelaic acid': { role:'acid', warn:'Можно утром и вечером, совместима с большинством.', category:'other_acid' },
+
+  // Actives
+  'ascorbic acid': { role:'vitamin_c', warn:'Нестабильный витамин С — хранить в темноте. Утром под SPF.', category:'vitamin_c' },
+  'sodium ascorbyl phosphate': { role:'vitamin_c', warn:'Стабильная форма витамина С.', category:'vitamin_c' },
+  niacinamide: { role:'serum_active', warn:'Универсальный актив — совместим почти со всем.', category:'niacinamide' },
+  'hyaluronic acid': { role:'ampoule', warn:'Наноси на влажную кожу для лучшего результата.', category:'humectant' },
+
+  // PDRN / peptides
+  pdrn: { role:'pdrn', warn:'Лучше работает под электропорацию или микроиглы.', category:'pdrn' },
+  polynucleotide: { role:'pdrn', warn:'То же что PDRN — регенерация и упругость.', category:'pdrn' },
+  'copper peptide': { role:'serum_active', warn:'Не совмещай с витамином С и кислотами.', category:'peptide' },
+  'palmitoyl tripeptide': { role:'serum_active', warn:'Пептид для упругости — хорошо совместим.', category:'peptide' },
+  matrixyl: { role:'serum_active', warn:'Пептидный комплекс для разглаживания морщин.', category:'peptide' },
+
+  // Potential irritants — flag but don't block
+  alcohol: { flag:'irritant', warn:'Сушащий спирт — может нарушать барьер при чувствительной коже.', category:'irritant' },
+  'denatured alcohol': { flag:'irritant', warn:'Денатурированный спирт — избегай при сухой коже.', category:'irritant' },
+  fragrance: { flag:'irritant', warn:'Отдушка — частый аллерген. При чувствительной коже осторожно.', category:'fragrance' },
+  parfum: { flag:'irritant', warn:'Парфюм — то же что fragrance.', category:'fragrance' },
+  'essential oil': { flag:'irritant', warn:'Эфирные масла могут раздражать чувствительную кожу.', category:'fragrance' },
+};
+
+function analyzeIngredients(ingredientString) {
+  if (!ingredientString) return { roles: [], warnings: [], flags: [], safety: null };
+
+  const lower = ingredientString.toLowerCase();
+  const found = { roles: new Set(), warnings: [], flags: [] };
+
+  // Safety scoring
+  const GOOD_INGREDIENTS = [
+    'hyaluronic acid','sodium hyaluronate','niacinamide','panthenol','ceramide',
+    'centella asiatica','madecassoside','asiaticoside','glycerin','squalane',
+    'allantoin','bisabolol','green tea','tocopherol','vitamin e','aloe vera',
+    'adenosine','peptide','collagen','pdrn','polynucleotide','beta-glucan',
+  ];
+  const BAD_INGREDIENTS = [
+    'alcohol denat','denatured alcohol','sd alcohol','benzyl alcohol',
+    'fragrance','parfum','methylparaben','propylparaben','butylparaben',
+    'formaldehyde','sodium lauryl sulfate','peg-','mineral oil',
+    'polyethylene glycol',
+  ];
+
+  let score = 7; // base score
+  const goodFound = [];
+  const badFound = [];
+
+  GOOD_INGREDIENTS.forEach(ing => {
+    if (lower.includes(ing)) { score = Math.min(10, score + 0.3); goodFound.push(ing); }
+  });
+  BAD_INGREDIENTS.forEach(ing => {
+    if (lower.includes(ing)) { score = Math.max(1, score - 1.2); badFound.push(ing); }
+  });
+
+  // Round to 1 decimal
+  score = Math.round(score * 10) / 10;
+  const safetyLevel = score >= 8 ? 'good' : score >= 5 ? 'ok' : 'warn';
+  const safetyEmoji = score >= 8 ? '🟢' : score >= 5 ? '🟡' : '🔴';
+
+  Object.entries(INGREDIENT_DB).forEach(([ingredient, data]) => {
+    if (lower.includes(ingredient)) {
+      if (data.role) found.roles.add(data.role);
+      if (data.warn) found.warnings.push({ ingredient, warn: data.warn, category: data.category });
+      if (data.flag) found.flags.push({ ingredient, flag: data.flag, warn: data.warn });
+    }
+  });
+
+  return {
+    roles: [...found.roles],
+    warnings: found.warnings,
+    flags: found.flags,
+    safety: { score, level: safetyLevel, emoji: safetyEmoji, goodFound, badFound },
+  };
+}
+
+function getSafetyColor(level) {
+  return level === 'good' ? 'var(--success)' : level === 'ok' ? 'var(--warn)' : 'var(--danger)';
+}
+
+// ─── BARCODE SCANNER ─────────────────────────────────────
+let _barcodeActive = false;
+
+function openBarcodeScanner() {
+  const wrap = document.getElementById('barcode-scanner-wrap');
+  if (!wrap) return;
+  wrap.style.display = 'block';
+  _barcodeActive = true;
+
+  if (typeof Quagga === 'undefined') {
+    document.getElementById('barcode-status').textContent = 'Библиотека не загружена';
+    return;
+  }
+
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: document.getElementById('barcode-video'),
+      constraints: { facingMode: 'environment', width: 640, height: 480 },
+    },
+    decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader'] },
+    locate: true,
+  }, err => {
+    if (err) {
+      document.getElementById('barcode-status').textContent = 'Нет доступа к камере';
+      return;
+    }
+    Quagga.start();
+  });
+
+  Quagga.onDetected(result => {
+    const code = result.codeResult.code;
+    if (code && _barcodeActive) {
+      closeBarcodeScanner();
+      lookupBarcode(code);
+    }
+  });
+}
+
+function closeBarcodeScanner() {
+  _barcodeActive = false;
+  const wrap = document.getElementById('barcode-scanner-wrap');
+  if (wrap) wrap.style.display = 'none';
+  if (typeof Quagga !== 'undefined') {
+    try { Quagga.stop(); } catch(e) {}
+  }
+}
+
+async function lookupBarcode(barcode) {
+  document.getElementById('add-loading').style.display = 'block';
+  document.getElementById('add-error').style.display = 'none';
+
+  try {
+    // Open Beauty Facts API
+    const res = await fetch(`https://world.openbeautyfacts.org/api/v0/product/${barcode}.json`);
+    const data = await res.json();
+
+    if (data.status === 1 && data.product) {
+      const p = data.product;
+      const name = p.product_name || p.product_name_en || '';
+      const brand = p.brands || '';
+      const ingredients = p.ingredients_text || p.ingredients_text_en || '';
+
+      const quantity = p.quantity || p.net_weight || '';
+      const fullName = (brand ? brand + ' ' : '') + name + (quantity ? ' ' + quantity : '');
+      document.getElementById('add-name').value = fullName.trim();
+
+      // Store ingredients for analysis
+      if (ingredients) {
+        window._pendingIngredients = ingredients;
+        const analysis = analyzeIngredients(ingredients);
+        if (analysis.warnings.length > 0 || analysis.flags.length > 0) {
+          window._pendingAnalysis = analysis;
+        }
+      }
+
+      document.getElementById('add-loading').style.display = 'none';
+      if (fullName.trim()) {
+        showToast('Найдено: ' + fullName.trim().substring(0, 40));
+      } else {
+        showToast('Штрихкод найден — уточни название');
+      }
+    } else {
+      // Not in Open Beauty Facts — try Open Food Facts
+      const res2 = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+      const data2 = await res2.json();
+      if (data2.status === 1 && data2.product?.product_name) {
+        document.getElementById('add-name').value = data2.product.product_name;
+        document.getElementById('add-loading').style.display = 'none';
+        showToast('Найдено — нажми Анализ');
+      } else {
+        throw new Error('Штрихкод не найден в базе. Введи название вручную.');
+      }
+    }
+  } catch(e) {
+    document.getElementById('add-loading').style.display = 'none';
+    const err = document.getElementById('add-error');
+    err.textContent = e.message || 'Ошибка поиска по штрихкоду';
+    err.style.display = 'block';
+  }
 }
 
 // ─── APP MENU ────────────────────────────────────────────
