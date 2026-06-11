@@ -7,7 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <!-- Barcode scanner -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://unpkg.com/tesseract.js@5/dist/tesseract.min.js"></script>
 <!-- Firebase -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
@@ -1014,50 +1015,38 @@ async function analyzeFromPhoto(input) {
       r.readAsDataURL(file);
     });
 
-    // Use Google Cloud Vision API for OCR
-    const visionRes = await fetch(
-      'https://vision.googleapis.com/v1/images:annotate?key=AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg',
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          requests: [{
-            image: { content: base64 },
-            features: [
-              { type: 'TEXT_DETECTION', maxResults: 1 },
-              { type: 'LOGO_DETECTION', maxResults: 5 },
-            ]
-          }]
-        })
+    // Use Tesseract.js for OCR (free, no API key required)
+    document.getElementById('add-loading').textContent = '🔍 Распознаю текст...';
+
+    if (typeof Tesseract === 'undefined') throw new Error('OCR библиотека не загружена');
+
+    const { data: { text } } = await Tesseract.recognize(file, 'eng+rus', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round((m.progress || 0) * 100);
+          document.getElementById('add-loading').textContent = `🔍 Распознаю текст... ${pct}%`;
+        }
       }
-    );
+    });
 
-    if (!visionRes.ok) throw new Error('Vision API error: ' + visionRes.status);
-    const visionData = await visionRes.json();
-
-    if (visionData.error) throw new Error(visionData.error.message);
-
-    const annotations = visionData.responses?.[0];
-    if (!annotations) throw new Error('Нет ответа от API');
-
-    const fullText = annotations?.fullTextAnnotation?.text
-      || annotations?.textAnnotations?.[0]?.description
-      || '';
-    const logos = (annotations?.logoAnnotations || []).map(l => l.description).join(' ');
-
-    const lines = fullText.split('\n')
+    const lines = text.split('\n')
       .map(l => l.trim())
-      .filter(l => l.length > 1 && l.length < 60 && /[a-zA-Zа-яА-ЯёЁ]/.test(l));
+      .filter(l => l.length > 2 && l.length < 60 && /[a-zA-Zа-яА-ЯёЁ]/.test(l));
 
-    const combined = (logos ? logos + ' ' : '') + lines.slice(0, 5).join(' ');
-    const cleanName = combined.replace(/[^\w\sа-яА-ЯёЁ\-\+%]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
+    // Take first meaningful lines — usually brand + product name
+    const combined = lines.slice(0, 5).join(' ');
+    const cleanName = combined
+      .replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\+%\.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 80);
 
     if (cleanName.length > 2) {
       document.getElementById('add-name').value = cleanName;
       document.getElementById('add-loading').style.display = 'none';
       showToast('Текст распознан — нажми Анализ');
     } else {
-      throw new Error('Текст не распознан — попробуй сфотографировать чётче');
+      throw new Error('Текст не распознан — попробуй сфотографировать чётче и с хорошим освещением');
     }
 
   } catch(e) {
@@ -2178,23 +2167,22 @@ async function loadProductUsage() {
 
     let usageContent = '';
     if (data.items && data.items.length > 0) {
-      const snippets = data.items
+      const allSnippets = data.items
         .slice(0, 3)
         .map(item => item.snippet || '')
-        .join(' ')
-        .replace(/\.\.\./g, ' ')
-        .trim();
+        .filter(Boolean);
 
-      const appKeywords = ['нанести','нанесите','нанос','применени','смыть','смойте',
-        'держать','слой','втирать','втирайте','помассируй','протрите','тонким','массажными'];
-      const hasInstructions = appKeywords.some(k => snippets.toLowerCase().includes(k));
+      const appKeywords = ['нанести','нанесите','применени','смыть','держать','слой',
+        'втирать','протрите','наносить','apply','use','rinse'];
+      let best = allSnippets.find(s => appKeywords.some(k => s.toLowerCase().includes(k)));
+      if (!best && allSnippets.length > 0) best = allSnippets[0];
 
-      if (hasInstructions && snippets.length > 30) {
-        usageContent = `<div style="margin-top:4px;font-size:12px;color:var(--text-muted);line-height:1.6">${snippets.substring(0, 350)}</div>`;
+      if (best && best.length > 20) {
+        usageContent = `<div style="margin-top:4px;font-size:12px;color:var(--text-muted);line-height:1.6">${best.replace(/\.\.\./g,' ').trim().substring(0, 400)}</div>`;
       }
     }
 
-    const html = usageContent || '<span style="color:var(--text-hint);font-size:12px">Инструкция не найдена — попробуй поискать «' + name + ' как применять»</span>';
+    const html = usageContent || '<span style="color:var(--text-hint);font-size:12px">Описание не найдено — попробуй поискать «' + name + ' как применять»</span>';
     _usageCache[name] = html;
     usageText.innerHTML = html;
     btn.style.display = 'none';
@@ -2440,49 +2428,59 @@ function getSafetyColor(level) {
 // ─── BARCODE SCANNER ─────────────────────────────────────
 let _barcodeActive = false;
 
-function openBarcodeScanner() {
+let _zxingReader = null;
+
+async function openBarcodeScanner() {
   const wrap = document.getElementById('barcode-scanner-wrap');
   if (!wrap) return;
   wrap.style.display = 'block';
   _barcodeActive = true;
 
-  if (typeof Quagga === 'undefined') {
-    document.getElementById('barcode-status').textContent = 'Библиотека не загружена';
-    return;
+  const statusEl = document.getElementById('barcode-status');
+
+  try {
+    if (typeof ZXing === 'undefined') throw new Error('Библиотека не загружена');
+
+    const hints = new Map();
+    const formats = [
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A,
+      ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.CODE_128,
+    ];
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formats);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+
+    _zxingReader = new ZXing.BrowserMultiFormatReader(hints);
+
+    statusEl.textContent = 'Наведи камеру на штрихкод';
+
+    await _zxingReader.decodeFromConstraints(
+      { video: { facingMode: 'environment' } },
+      document.getElementById('barcode-video'),
+      (result, err) => {
+        if (result && _barcodeActive) {
+          closeBarcodeScanner();
+          lookupBarcode(result.getText());
+        }
+      }
+    );
+  } catch(e) {
+    statusEl.textContent = e.message === 'Библиотека не загружена'
+      ? 'Библиотека сканера не загружена'
+      : 'Нет доступа к камере — разреши в браузере';
+    console.error('ZXing error:', e);
   }
-
-  Quagga.init({
-    inputStream: {
-      name: 'Live',
-      type: 'LiveStream',
-      target: document.getElementById('barcode-video'),
-      constraints: { facingMode: 'environment', width: 640, height: 480 },
-    },
-    decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader'] },
-    locate: true,
-  }, err => {
-    if (err) {
-      document.getElementById('barcode-status').textContent = 'Нет доступа к камере';
-      return;
-    }
-    Quagga.start();
-  });
-
-  Quagga.onDetected(result => {
-    const code = result.codeResult.code;
-    if (code && _barcodeActive) {
-      closeBarcodeScanner();
-      lookupBarcode(code);
-    }
-  });
 }
 
 function closeBarcodeScanner() {
   _barcodeActive = false;
   const wrap = document.getElementById('barcode-scanner-wrap');
   if (wrap) wrap.style.display = 'none';
-  if (typeof Quagga !== 'undefined') {
-    try { Quagga.stop(); } catch(e) {}
+  if (_zxingReader) {
+    try { _zxingReader.reset(); } catch(e) {}
+    _zxingReader = null;
   }
 }
 
