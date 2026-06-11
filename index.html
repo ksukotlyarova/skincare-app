@@ -77,6 +77,30 @@ initFromFirestore();
   --border-strong:rgba(255,255,255,0.11);
   --radius:14px;--radius-sm:10px;--radius-pill:100px;
 }
+.theme-light{
+  --bg:#F5F7FA;
+  --surface:#FFFFFF;
+  --surface2:#EEF1F6;
+  --surface3:#E2E7F0;
+  --text:#0F1923;
+  --text-muted:#4A6070;
+  --text-hint:#8FA4B4;
+  --accent:#0D9EB8;
+  --accent-light:rgba(13,158,184,0.08);
+  --accent-mid:rgba(13,158,184,0.18);
+  --accent-glow:rgba(13,158,184,0.20);
+  --accent-dark:#0A7D93;
+  --active-card:rgba(13,158,184,0.08);
+  --active-card-border:rgba(13,158,184,0.35);
+  --danger:#DC2626;
+  --danger-light:rgba(220,38,38,0.08);
+  --success:#16A34A;
+  --success-light:rgba(22,163,74,0.08);
+  --warn:#D97706;
+  --warn-light:rgba(217,119,6,0.08);
+  --border:rgba(15,25,35,0.08);
+  --border-strong:rgba(15,25,35,0.14);
+}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
 .shell{max-width:420px;margin:0 auto;min-height:100vh;background:var(--bg)}
 
@@ -330,6 +354,74 @@ header{
 .s-dropdown-option:hover{background:var(--surface2);color:var(--text)}
 .s-dropdown-option.selected{background:var(--accent-light);color:var(--accent)}
 .s-dropdown-option .opt-icon{font-size:14px;width:20px;text-align:center}
+
+/* swipe card */
+.product-card{overflow:hidden;position:relative}
+.card-swipe-wrap{position:relative;overflow:hidden;margin-bottom:6px}
+.card-swipe-inner{display:flex;transition:transform 0.25s ease;will-change:transform}
+.card-swipe-inner .product-card{flex:0 0 100%;margin-bottom:0;border-radius:var(--radius)}
+.swipe-action{position:absolute;right:0;top:0;bottom:0;width:72px;display:flex;align-items:center;justify-content:center;background:var(--danger);border-radius:0 var(--radius) var(--radius) 0;opacity:0;transition:opacity 0.2s;pointer-events:none;flex-direction:column;gap:3px}
+.swipe-action svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round}
+.swipe-action span{font-size:10px;color:#fff;font-weight:600}
+
+/* action menu */
+.action-menu{position:fixed;z-index:200;background:var(--surface);border:1px solid var(--border-strong);border-radius:var(--radius);padding:4px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,0.6);display:none}
+.action-menu.open{display:block}
+.action-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background 0.15s}
+.action-item:hover{background:var(--surface2)}
+.action-item.danger{color:var(--danger)}
+.action-item svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0}
+.action-dots{width:28px;height:28px;min-width:28px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.action-dots:hover{background:var(--surface2);border-color:var(--border-strong)}
+.action-dots svg{width:14px;height:14px;stroke:var(--text-muted);fill:var(--text-muted)}
+
+/* tooltip in routine */
+.step-info-btn{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s;margin-left:4px}
+.step-info-btn:hover{border-color:var(--accent);background:var(--accent-light)}
+.step-info-btn svg{width:11px;height:11px;stroke:var(--text-hint);fill:none;stroke-width:2;stroke-linecap:round}
+.step-info-btn:hover svg{stroke:var(--accent)}
+.step-tooltip{font-size:11px;color:var(--text-muted);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px;margin-top:4px;line-height:1.5;display:none}
+.step-tooltip.visible{display:block}
+.tooltip-why{color:var(--text-muted);font-size:11px;line-height:1.5}
+.tooltip-usage-loading{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* camera btn */
+.camera-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;border:1px dashed var(--border-strong);border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:all 0.15s}
+.camera-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.camera-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+
+/* hamburger */
+.hamburger-btn{display:flex;flex-direction:column;justify-content:center;gap:5px;width:36px;height:36px;background:none;border:none;cursor:pointer;padding:6px;border-radius:var(--radius-sm);transition:background 0.15s}
+.hamburger-btn:hover{background:var(--surface2)}
+.hamburger-btn span{display:block;height:2px;background:var(--text-muted);border-radius:2px;transition:all 0.2s}
+.hamburger-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger-btn.open span:nth-child(2){opacity:0}
+.hamburger-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* app menu */
+.app-menu-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:150;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(2px)}
+.app-menu-overlay.open{opacity:1;pointer-events:all}
+.app-menu{position:fixed;top:0;right:0;bottom:0;width:min(280px,85vw);background:var(--surface);z-index:160;transform:translateX(100%);transition:transform 0.28s cubic-bezier(.4,0,.2,1);padding:0;overflow-y:auto;box-shadow:-4px 0 32px rgba(0,0,0,0.4)}
+.app-menu.open{transform:translateX(0)}
+.app-menu-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1rem 1rem;border-bottom:1px solid var(--border)}
+.app-menu-title{font-size:18px;font-weight:600;color:var(--text)}
+.app-menu-title em{font-style:normal;color:var(--accent)}
+.app-menu-close{width:32px;height:32px;border-radius:50%;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.app-menu-close:hover{background:var(--surface2)}
+.app-menu-close svg{width:16px;height:16px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round}
+.app-menu-section-label{font-size:10px;font-weight:700;color:var(--text-hint);letter-spacing:0.1em;text-transform:uppercase;padding:1rem 1rem 0.4rem}
+.app-menu-divider{height:1px;background:var(--border);margin:0.75rem 0}
+.app-menu-season{display:flex;flex-direction:column;gap:2px;padding:0 0.5rem}
+.app-menu-season-btn{display:flex;align-items:center;gap:10px;padding:10px 10px;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all 0.15s}
+.app-menu-season-btn:hover,.app-menu-season-btn.active{background:var(--accent-light);color:var(--accent)}
+.app-menu-theme{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 1rem}
+.app-menu-theme-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 12px;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;border:1px solid var(--border);background:var(--surface2);transition:all 0.15s}
+.app-menu-theme-btn:hover,.app-menu-theme-btn.active{background:var(--accent-light);color:var(--accent);border-color:var(--active-card-border)}
+.app-menu-theme-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.app-menu-action{display:flex;align-items:center;gap:10px;padding:12px 1.5rem;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:background 0.15s}
+.app-menu-action:hover{background:var(--surface2)}
+.app-menu-action svg{width:16px;height:16px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round}
 </style>
 </head>
 <body>
@@ -337,29 +429,60 @@ header{
   <header>
     <div class="header-top">
       <h1 class="app-title">skin<em>care</em></h1>
-      <div class="s-dropdown" id="season-dropdown">
-        <button class="s-dropdown-btn" id="season-btn" onclick="toggleSeasonMenu()">
-          <span id="season-label">🌿 Сезон</span>
-          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-        <div class="s-dropdown-menu" id="season-menu">
-          <button class="s-dropdown-option selected" data-value="" onclick="pickSeason(this,'')"><span class="opt-icon">🌿</span>Без сезона</button>
-          <button class="s-dropdown-option" data-value="summer" onclick="pickSeason(this,'summer')"><span class="opt-icon">🌞</span>Лето</button>
-          <button class="s-dropdown-option" data-value="winter" onclick="pickSeason(this,'winter')"><span class="opt-icon">❄️</span>Зима</button>
-          <button class="s-dropdown-option" data-value="vacation" onclick="pickSeason(this,'vacation')"><span class="opt-icon">✈️</span>Отпуск</button>
-        </div>
-      </div>
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleAppMenu()" aria-label="Меню">
+        <span></span><span></span><span></span>
+      </button>
     </div>
     <nav class="tabs">
-      <button class="tab-btn active" onclick="showTab('products')">Средства</button>
-      <button class="tab-btn" onclick="showTab('routine')">Рутина</button>
+      <button class="tab-btn active" onclick="showTab('routine')">Рутина</button>
+      <button class="tab-btn" onclick="showTab('products')">Средства</button>
       <button class="tab-btn" onclick="showTab('tips')">Советы</button>
     </nav>
   </header>
 
+  <!-- App menu overlay -->
+  <div class="app-menu-overlay" id="app-menu-overlay" onclick="closeAppMenu()"></div>
+  <div class="app-menu" id="app-menu">
+    <div class="app-menu-header">
+      <span class="app-menu-title">skin<em>care</em></span>
+      <button class="app-menu-close" onclick="closeAppMenu()">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="app-menu-section-label">Сезон</div>
+    <div class="app-menu-season">
+      <button class="app-menu-season-btn" data-value="" onclick="menuPickSeason('')">🌿 Без сезона</button>
+      <button class="app-menu-season-btn" data-value="summer" onclick="menuPickSeason('summer')">🌞 Лето</button>
+      <button class="app-menu-season-btn" data-value="winter" onclick="menuPickSeason('winter')">❄️ Зима</button>
+      <button class="app-menu-season-btn" data-value="vacation" onclick="menuPickSeason('vacation')">✈️ Отпуск</button>
+    </div>
+
+    <div class="app-menu-divider"></div>
+
+    <div class="app-menu-section-label">Тема</div>
+    <div class="app-menu-theme">
+      <button class="app-menu-theme-btn" id="theme-dark" onclick="setTheme('dark')">
+        <svg viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        Тёмная
+      </button>
+      <button class="app-menu-theme-btn" id="theme-light" onclick="setTheme('light')">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        Светлая
+      </button>
+    </div>
+
+    <div class="app-menu-divider"></div>
+
+    <button class="app-menu-action" onclick="closeAppMenu();openAddModal()">
+      <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Добавить средство
+    </button>
+  </div>
+
   <main class="content">
-    <div id="tab-products" class="tab-panel active">
-      <div class="note-box">Нажми на карточку — добавить в рутину. Кружок справа — отметить закончившимся. Долгое нажатие на карточку — отметить как открытое.</div>
+    <div id="tab-products" class="tab-panel">
+      <div class="note-box">Свайп влево — отметить закончившимся. Нажми ⋮ для действий с карточкой.</div>
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
         <button class="season-btn active" id="filter-all" onclick="setFilter('all')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface3);border:1px solid var(--border-strong);font-size:11px;font-weight:600;color:var(--text);cursor:pointer">Все <span id="total-count" style="opacity:0.6">0</span></button>
         <button class="season-btn" id="filter-active" onclick="setFilter('active')" style="flex:none;padding:5px 12px;border-radius:var(--radius-pill);background:var(--surface2);border:1px solid var(--border);font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer">В рутине <span id="active-count" style="opacity:0.6">0</span></button>
@@ -375,13 +498,10 @@ header{
       </div>
       <div id="suggestions-area"></div>
       <div id="products-list"></div>
-      <button class="add-btn" onclick="openAddModal()">
-        <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Добавить средство вручную
-      </button>
+
     </div>
 
-    <div id="tab-routine" class="tab-panel">
+    <div id="tab-routine" class="tab-panel active">
       <div class="note-box" id="routine-note">Рутина собирается автоматически на основе активных средств и выбранного сезона.</div>
       <div id="routine-list"></div>
     </div>
@@ -396,6 +516,9 @@ header{
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- Action menu -->
+<div class="action-menu" id="action-menu"></div>
+
 <!-- Add modal -->
 <div class="modal-overlay" id="add-modal" onclick="closeAddModal(event)">
   <div class="modal">
@@ -403,13 +526,26 @@ header{
 
     <!-- Step 1: input -->
     <div id="add-step1">
-      <label class="modal-label">Напиши название — ИИ заполнит остальное</label>
+      <label class="modal-label">Напиши название или сфотографируй упаковку</label>
       <div style="display:flex;gap:8px;margin-bottom:4px">
         <input class="modal-input" id="add-name" type="text" placeholder="Например: Laneige Water Sleeping Mask" style="margin-bottom:0;flex:1" onkeydown="if(event.key==='Enter')analyzeProduct()"/>
         <button class="modal-btn primary" id="analyze-btn" onclick="analyzeProduct()" style="padding:9px 14px;white-space:nowrap;margin-bottom:0">Анализ</button>
       </div>
+      <div style="display:flex;align-items:center;gap:8px;margin:8px 0">
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+        <span style="font-size:11px;color:var(--text-hint)">или</span>
+        <div style="flex:1;height:1px;background:var(--border)"></div>
+      </div>
+      <label class="camera-btn" for="camera-input">
+        <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        Сфотографировать упаковку
+      </label>
+      <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" onchange="analyzeFromPhoto(this)"/>
+      <div id="camera-preview" style="display:none;margin-top:8px;border-radius:var(--radius-sm);overflow:hidden;max-height:120px">
+        <img id="camera-img" style="width:100%;object-fit:cover;max-height:120px" alt="Фото упаковки"/>
+      </div>
       <div id="add-error" style="font-size:12px;color:var(--danger);margin-top:4px;display:none"></div>
-      <div id="add-loading" style="font-size:12px;color:var(--text-muted);margin-top:8px;display:none">ИИ анализирует средство...</div>
+      <div id="add-loading" style="font-size:12px;color:var(--text-muted);margin-top:8px;display:none">🔍 Ищу в Google и анализирую...</div>
     </div>
 
     <!-- Step 2: AI result preview -->
@@ -678,16 +814,13 @@ function setSeason(s) {
 }
 
 function syncSeasonSelect() {
-  const btn = document.getElementById('season-btn');
-  const label = document.getElementById('season-label');
-  if (!btn || !label) return;
-  const opts = { '': '🌿 Сезон', summer: '🌞 Лето', winter: '❄️ Зима', vacation: '✈️ Отпуск' };
-  const s = state.season || '';
-  label.textContent = opts[s] || '🌿 Сезон';
-  btn.classList.toggle('has-value', !!s);
-  document.querySelectorAll('.s-dropdown-option').forEach(o => {
-    o.classList.toggle('selected', o.dataset.value === s);
+  // sync app menu season buttons
+  document.querySelectorAll('.app-menu-season-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === (state.season || ''));
   });
+  // update routine note
+  const note = document.getElementById('routine-note');
+  if (note) note.textContent = state.season ? SEASON_NOTES[state.season] : 'Рутина собирается автоматически на основе активных средств и выбранного сезона.';
 }
 
 function toggleSeasonMenu() {
@@ -750,13 +883,6 @@ function toggleFinished(id, e) {
   saveState(); render();
 }
 
-// long press support
-let pressTimer = null;
-function onCardPointerDown(id) {
-  pressTimer = setTimeout(() => { pressTimer = null; toggleOpened(id, null); }, 600);
-}
-function onCardPointerUp() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
-
 function tapCard(id) {
   if (isFinished(id)) return;
   const product = allProducts().find(p => p.id === id);
@@ -801,7 +927,83 @@ function resetAddModal() {
   document.getElementById('add-error').style.display = 'none';
   document.getElementById('add-name').value = '';
   document.getElementById('analyze-btn').disabled = false;
+  document.getElementById('camera-preview').style.display = 'none';
+  const camInput = document.getElementById('camera-input');
+  if (camInput) camInput.value = '';
   pendingProduct = null;
+}
+
+async function analyzeFromPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Show preview
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('camera-preview').style.display = 'block';
+    document.getElementById('camera-img').src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+
+  document.getElementById('add-loading').style.display = 'block';
+  document.getElementById('add-error').style.display = 'none';
+
+  try {
+    // Convert to base64
+    const base64 = await new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result.split(',')[1]);
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+
+    // Call Google Vision API for text detection
+    const visionRes = await fetch(
+      `https://vision.googleapis.com/v1/images:annotate?key=AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          requests: [{
+            image: { content: base64 },
+            features: [
+              { type: 'TEXT_DETECTION', maxResults: 1 },
+              { type: 'LOGO_DETECTION', maxResults: 3 },
+            ]
+          }]
+        })
+      }
+    );
+
+    const visionData = await visionRes.json();
+    const annotations = visionData.responses?.[0];
+
+    // Extract text
+    const fullText = annotations?.fullTextAnnotation?.text || annotations?.textAnnotations?.[0]?.description || '';
+    const logos = annotations?.logoAnnotations?.map(l => l.description).join(' ') || '';
+
+    // Parse product name from text — look for brand + product pattern
+    const lines = fullText.split('\n').map(l => l.trim()).filter(l => l.length > 2 && l.length < 60);
+    const logos_text = logos ? logos + ' ' : '';
+
+    // Heuristic: first few meaningful lines likely contain brand + product name
+    const candidateName = logos_text + lines.slice(0, 4).join(' ');
+    const cleanName = candidateName.replace(/[^a-zA-Zа-яА-ЯёЁ0-9\s\-\+%]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 80);
+
+    if (cleanName.length > 3) {
+      document.getElementById('add-name').value = cleanName;
+      document.getElementById('add-loading').style.display = 'none';
+      showToast('Текст распознан — нажми Анализ');
+    } else {
+      throw new Error('Текст не распознан');
+    }
+
+  } catch(e) {
+    document.getElementById('add-loading').style.display = 'none';
+    const err = document.getElementById('add-error');
+    err.textContent = 'Не удалось распознать текст. Попробуй сфотографировать чётче или введи название вручную.';
+    err.style.display = 'block';
+  }
 }
 
 async function analyzeProduct() {
@@ -816,8 +1018,30 @@ async function analyzeProduct() {
   document.getElementById('add-loading').style.display = 'block';
   document.getElementById('analyze-btn').disabled = true;
 
-  // Local analysis by keywords
-  await new Promise(r => setTimeout(r, 400));
+  // Try Google Custom Search first
+  const GOOGLE_API_KEY = 'AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg';
+  const SEARCH_ENGINE_ID = '43db62a9e66ba4e80';
+  let googleSnippet = '';
+
+  try {
+    const query = encodeURIComponent(name + ' уход за кожей описание состав');
+    const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}&num=3&lr=lang_ru`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.items && data.items.length > 0) {
+      // Combine snippets from top results
+      googleSnippet = data.items
+        .slice(0, 2)
+        .map(item => item.snippet || '')
+        .join(' ')
+        .substring(0, 400);
+    }
+  } catch(e) {
+    console.warn('Google search failed, falling back to local analysis', e);
+  }
+
+  // Local analysis by keywords (always runs as base)
+  await new Promise(r => setTimeout(r, 100));
 
   const n = name.toLowerCase();
 
@@ -859,17 +1083,36 @@ async function analyzeProduct() {
     else result = { cat:'Другое', role:'custom', desc:'Средство для ухода за кожей' };
   }
 
+  // Use Google snippet as description if available and informative
+  let finalDesc = result.desc || 'Средство для ухода за кожей';
+  if (googleSnippet && googleSnippet.length > 30) {
+    // Extract a clean short description from snippet
+    const cleanSnippet = googleSnippet
+      .replace(/\d{2}\.\d{2}\.\d{4}/g, '')  // remove dates
+      .replace(/https?:\/\/\S+/g, '')         // remove urls
+      .trim()
+      .substring(0, 120);
+    if (cleanSnippet.length > 20) finalDesc = cleanSnippet;
+  }
+
   pendingProduct = {
     name: name,
-    desc: result.desc || 'Средство для ухода за кожей',
+    desc: finalDesc,
     cat: result.cat || 'Другое',
     role: result.role || 'custom',
     tip: result.tip || '',
+    googleFound: !!googleSnippet,
   };
 
   document.getElementById('preview-name').textContent = pendingProduct.name;
   document.getElementById('preview-desc').textContent = pendingProduct.desc;
   document.getElementById('preview-cat').textContent = pendingProduct.cat;
+  // Show source badge
+  const sourceEl = document.getElementById('preview-source');
+  if (sourceEl) {
+    sourceEl.textContent = pendingProduct.googleFound ? '🔍 Найдено в Google' : '🔤 Анализ по ключевым словам';
+    sourceEl.style.color = pendingProduct.googleFound ? 'var(--success)' : 'var(--text-hint)';
+  }
 
   const roleTag = document.getElementById('preview-role-tag');
   if (pendingProduct.role && pendingProduct.role !== 'custom') {
@@ -1477,12 +1720,21 @@ function makeCard(p) {
   const done = isFinished(p.id);
   const active = isActive(p.id);
   const opened = isOpened(p.id);
+
+  // Wrapper for swipe
+  const wrap = document.createElement('div');
+  wrap.className = 'card-swipe-wrap';
+
+  // Swipe delete background
+  const swipeBg = document.createElement('div');
+  swipeBg.className = 'swipe-action';
+  swipeBg.innerHTML = `<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg><span>Закончилось</span>`;
+
+  const inner = document.createElement('div');
+  inner.className = 'card-swipe-inner';
+
   const card = document.createElement('div');
   card.className = 'product-card' + (active ? ' is-active' : '') + (done ? ' is-finished' : '');
-  card.onclick = () => tapCard(p.id);
-  card.onpointerdown = () => onCardPointerDown(p.id);
-  card.onpointerup = onCardPointerUp;
-  card.onpointerleave = onCardPointerUp;
   card.innerHTML = `
     <div class="product-info">
       <div class="product-name">${p.name}</div>
@@ -1496,16 +1748,120 @@ function makeCard(p) {
       </div>
     </div>
     <div class="card-actions">
-      <button class="finish-btn ${done ? 'is-done' : ''}" onclick="toggleFinished(${p.id}, event)" aria-label="${done ? 'Вернуть' : 'Закончилось'}">
-        <svg viewBox="0 0 24 24">${done
-          ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
-          : '<polyline points="20 6 9 17 4 12"/>'
-        }</svg>
+      <button class="action-dots" onclick="openActionMenu(event,${p.id})" aria-label="Действия">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="19" r="1.5" fill="currentColor"/></svg>
       </button>
     </div>
   `;
-  return card;
+
+  inner.appendChild(card);
+  wrap.appendChild(swipeBg);
+  wrap.appendChild(inner);
+
+  // Swipe logic
+  if (!done) {
+    let startX = 0, currentX = 0, swiping = false;
+    const THRESHOLD = 60;
+
+    inner.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      swiping = true;
+    }, { passive: true });
+
+    inner.addEventListener('touchmove', e => {
+      if (!swiping) return;
+      currentX = e.touches[0].clientX - startX;
+      if (currentX < 0) {
+        const move = Math.max(currentX, -80);
+        inner.style.transform = `translateX(${move}px)`;
+        swipeBg.style.opacity = Math.min(Math.abs(move) / THRESHOLD, 1);
+      }
+    }, { passive: true });
+
+    inner.addEventListener('touchend', () => {
+      swiping = false;
+      if (Math.abs(currentX) >= THRESHOLD) {
+        // Confirm swipe
+        inner.style.transform = 'translateX(-100%)';
+        swipeBg.style.opacity = '1';
+        setTimeout(() => { toggleFinished(p.id, null); }, 280);
+      } else {
+        inner.style.transform = '';
+        swipeBg.style.opacity = '0';
+      }
+      currentX = 0;
+    });
+  }
+
+  return wrap;
 }
+
+// ─── ACTION MENU ─────────────────────────────────────────
+let _actionMenuTarget = null;
+
+function openActionMenu(e, id) {
+  e.stopPropagation();
+  const menu = document.getElementById('action-menu');
+  const p = allProducts().find(x => x.id === id);
+  if (!p || !menu) return;
+
+  _actionMenuTarget = id;
+
+  const active = isActive(id);
+  const opened = isOpened(id);
+  const done = isFinished(id);
+
+  menu.innerHTML = `
+    ${!done ? `<button class="action-item" onclick="actionToggleRoutine(${id})">
+      <svg viewBox="0 0 24 24">${active
+        ? '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+        : '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'}</svg>
+      ${active ? 'Убрать из рутины' : 'Добавить в рутину'}
+    </button>` : ''}
+    ${!done ? `<button class="action-item" onclick="actionToggleOpened(${id})">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="${opened ? 'M7 11V7a5 5 0 0 1 9.9-1' : 'M7 11V7a5 5 0 0 1 10 0'}"/></svg>
+      ${opened ? 'Закрыто (убрать отметку)' : 'Открыто — использую'}
+    </button>` : ''}
+    <button class="action-item ${done ? '' : 'danger'}" onclick="actionToggleFinished(${id})">
+      <svg viewBox="0 0 24 24">${done
+        ? '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/>'
+        : '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>'}</svg>
+      ${done ? 'Вернуть в арсенал' : 'Закончилось'}
+    </button>
+  `;
+
+  // Position near the button
+  const rect = e.currentTarget.getBoundingClientRect();
+  menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.style.left = 'auto';
+  menu.classList.add('open');
+}
+
+function closeActionMenu() {
+  document.getElementById('action-menu')?.classList.remove('open');
+  _actionMenuTarget = null;
+}
+
+function actionToggleRoutine(id) {
+  closeActionMenu();
+  tapCard(id);
+}
+
+function actionToggleOpened(id) {
+  closeActionMenu();
+  toggleOpened(id, null);
+}
+
+function actionToggleFinished(id) {
+  closeActionMenu();
+  toggleFinished(id, null);
+}
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('action-menu');
+  if (menu && !menu.contains(e.target)) closeActionMenu();
+});
 
 function renderRoutine() {
   const list = document.getElementById('routine-list');
@@ -1531,9 +1887,19 @@ function renderRoutine() {
         ${day.steps.map((s, n) => `
           <div class="step-row">
             <div class="step-num">${n+1}</div>
-            <div>
-              <div class="step-product">${s.p}</div>
-              <div class="step-why">${s.w}</div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:4px">
+                <div class="step-product">${s.p}</div>
+                <button class="step-info-btn" onclick="toggleTooltip(this, ${JSON.stringify(s.p)})" aria-label="Подсказка" data-product="${s.p.replace(/"/g,'&quot;')}">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </button>
+              </div>
+              <div class="step-tooltip">
+                <div class="tooltip-why">${s.w}</div>
+                <div class="tooltip-usage" style="display:none">
+                  <div class="tooltip-usage-loading" style="color:var(--text-hint);font-size:11px;padding:4px 0">Загружаю инструкцию...</div>
+                </div>
+              </div>
             </div>
           </div>
         `).join('')}
@@ -1541,6 +1907,80 @@ function renderRoutine() {
     `;
     list.appendChild(block);
   });
+}
+
+const _usageCache = {};
+
+async function toggleTooltip(btn, productName) {
+  const tooltip = btn.closest('.step-row').querySelector('.step-tooltip');
+  if (!tooltip) return;
+
+  const isVisible = tooltip.classList.contains('visible');
+  tooltip.classList.toggle('visible', !isVisible);
+  btn.style.borderColor = !isVisible ? 'var(--accent)' : '';
+  btn.style.background = !isVisible ? 'var(--accent-light)' : '';
+  btn.querySelector('svg').style.stroke = !isVisible ? 'var(--accent)' : '';
+
+  if (!isVisible && productName) {
+    const usageEl = tooltip.querySelector('.tooltip-usage');
+    const loadingEl = tooltip.querySelector('.tooltip-usage-loading');
+    if (!usageEl) return;
+
+    // Already loaded
+    if (_usageCache[productName]) {
+      usageEl.style.display = 'block';
+      usageEl.innerHTML = _usageCache[productName];
+      return;
+    }
+
+    // Show loading
+    usageEl.style.display = 'block';
+    loadingEl && (loadingEl.style.display = 'block');
+
+    try {
+      const GOOGLE_API_KEY = 'AIzaSyB5BnyhgVYGq5VoghSyLigK25e7kxHtNFg';
+      const SEARCH_ENGINE_ID = '43db62a9e66ba4e80';
+      const query = encodeURIComponent(productName + ' как наносить применение инструкция');
+      const url = `https://www.googleapis.com/customsearch/v1?key=${GOOGLE_API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}&num=3&lr=lang_ru`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      let usageText = '';
+      if (data.items && data.items.length > 0) {
+        // Extract snippet with application instructions
+        const snippets = data.items
+          .slice(0, 3)
+          .map(item => item.snippet || '')
+          .join(' ')
+          .replace(/\.\.\./g, ' ')
+          .trim();
+
+        // Try to find application steps in snippets
+        const appKeywords = ['нанести', 'нанесите', 'нанос', 'применени', 'смыть', 'смойте', 'держать', 'слой', 'втирать', 'втирайте', 'помассируй', 'протрите', 'тонким', 'массажными'];
+        const hasInstructions = appKeywords.some(k => snippets.toLowerCase().includes(k));
+
+        if (hasInstructions && snippets.length > 30) {
+          usageText = snippets.substring(0, 280);
+        }
+      }
+
+      // Format result
+      const html = usageText
+        ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">
+             <div style="font-size:10px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">Применение</div>
+             <div style="font-size:11px;color:var(--text-muted);line-height:1.6">${usageText}</div>
+           </div>`
+        : `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:11px;color:var(--text-hint)">
+             Инструкция не найдена — попробуй поискать «${productName} как применять» в интернете
+           </div>`;
+
+      _usageCache[productName] = html;
+      usageEl.innerHTML = html;
+
+    } catch(e) {
+      if (usageEl) usageEl.innerHTML = '<div style="font-size:11px;color:var(--text-hint);margin-top:4px">Не удалось загрузить инструкцию</div>';
+    }
+  }
 }
 
 // ─── SEARCH ──────────────────────────────────────────────
@@ -1561,7 +2001,7 @@ function showTab(tab) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
-  const idx = ['products','routine','tips'].indexOf(tab);
+  const idx = ['routine','products','tips'].indexOf(tab);
   if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
 }
 
@@ -1575,6 +2015,59 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// ─── APP MENU ────────────────────────────────────────────
+function toggleAppMenu() {
+  const menu = document.getElementById('app-menu');
+  const overlay = document.getElementById('app-menu-overlay');
+  const btn = document.getElementById('hamburger-btn');
+  const isOpen = menu.classList.contains('open');
+  menu.classList.toggle('open', !isOpen);
+  overlay.classList.toggle('open', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  if (!isOpen) syncAppMenu();
+}
+
+function closeAppMenu() {
+  document.getElementById('app-menu')?.classList.remove('open');
+  document.getElementById('app-menu-overlay')?.classList.remove('open');
+  document.getElementById('hamburger-btn')?.classList.remove('open');
+}
+
+function syncAppMenu() {
+  // Sync season buttons
+  document.querySelectorAll('.app-menu-season-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.value === (state.season || ''));
+  });
+  // Sync theme buttons
+  const theme = localStorage.getItem('sc_theme') || 'dark';
+  document.getElementById('theme-dark')?.classList.toggle('active', theme === 'dark');
+  document.getElementById('theme-light')?.classList.toggle('active', theme === 'light');
+}
+
+function menuPickSeason(val) {
+  setSeason(val);
+  syncAppMenu();
+}
+
+// ─── THEME ───────────────────────────────────────────────
+function setTheme(theme) {
+  localStorage.setItem('sc_theme', theme);
+  document.body.classList.toggle('theme-light', theme === 'light');
+  // Update header gradient
+  const header = document.querySelector('header');
+  if (header) {
+    header.style.background = theme === 'light'
+      ? 'linear-gradient(to bottom, rgba(245,247,250,0.97) 0%, rgba(225,232,244,0.97) 100%)'
+      : 'linear-gradient(to bottom, rgba(7,13,18,0.97) 0%, rgba(14,32,48,0.97) 100%)';
+  }
+  syncAppMenu();
+}
+
+function initTheme() {
+  const theme = localStorage.getItem('sc_theme') || 'dark';
+  setTheme(theme);
+}
+
 // ─── INIT ────────────────────────────────────────────────
 function init() {
   // Reload state (Firestore may have loaded by now)
@@ -1583,13 +2076,14 @@ function init() {
   render();
 }
 
+initTheme();
+
 // Wait for Firebase to load, fallback after 3s
 if (window._remoteState) {
   init();
 } else {
   window.addEventListener('firebase-ready', () => { state = loadState(); syncSeasonSelect(); render(); });
   setTimeout(() => { if (!document.getElementById('products-list').firstChild) init(); }, 3000);
-  // Show loading indicator immediately
   syncSeasonSelect();
   render();
 }
